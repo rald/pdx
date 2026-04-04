@@ -75,7 +75,6 @@ int main(int argc,char *argv[]) {
 	SDL_SetCursor(mouse->cursor);
 	SDL_WarpMouseInWindow(window, mouse->x, mouse->y);
 
-
 	canvas=Canvas_New(
 				palette,    /* palette     */
 				      0,    /* x           */ 
@@ -92,20 +91,16 @@ int main(int argc,char *argv[]) {
 	);
 	
 	scrollBarVertical = ScrollBar_New(
+		palette, canvas,
 		SCROLLBAR_ORIENTATION_VERTICAL,
 		SCREEN_WIDTH - 16, 0, 
-		16, SCREEN_HEIGHT - 32 - 16,
-		0, 256, 0, 
-		12,
-		palette);
+		16, SCREEN_HEIGHT - 32 - 16);
 
 	scrollBarHorizontal = ScrollBar_New(
+		palette, canvas,
 		SCROLLBAR_ORIENTATION_HORIZONTAL,
 		0, SCREEN_HEIGHT - 32 - 16, 
-		SCREEN_WIDTH - 16, 16,
-		0, 256, 0, 
-		12,
-		palette);
+		SCREEN_WIDTH - 16, 16);
 
 
 

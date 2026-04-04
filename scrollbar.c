@@ -1,13 +1,9 @@
-
-
-
 #include "scrollbar.h"
 
 ScrollBar *ScrollBar_New(
+		Palette *palette, Canvas *canvas,
 		ScrollBarOrientation orientation,
-		int x, int y, int w, int h, 
-		int begin, int end, int value, 
-		byte color, Palette *palette) {
+		int x, int y, int w, int h) {
 	
 	ScrollBar *scrollBar = malloc(sizeof(*scrollBar));
 	
@@ -18,25 +14,21 @@ ScrollBar *ScrollBar_New(
 		scrollBar->w = w;
 		scrollBar->h = h;
 		
-		if(begin>end) { int tmp=begin; begin=end; end=begin; }
-
-		scrollBar->begin = begin;
-		scrollBar->end = end;
-		scrollBar->value = value;
-		
-		scrollBar->color = color;
 		scrollBar->palette = palette;
-		
+		scrollBar->canvas = canvas;
+						
 		switch(orientation) {
 		case SCROLLBAR_ORIENTATION_VERTICAL:
 			scrollBar->buttonUp = Button_New(x, y, w, 16, palette);
 			scrollBar->buttonDown = Button_New(x + w - 16, y + h - 16, w, 16, palette);
-			scrollBar->rectThumb = (SDL_Rect) {x, y + value + 16 , w, 16};			
+			scrollBar->scrollPosition = 0;
+			scrollBar->contentScrollPosition = 0;
 			break;
 		case SCROLLBAR_ORIENTATION_HORIZONTAL:
 			scrollBar->buttonLeft = Button_New(x, y, 16, h, palette);
 			scrollBar->buttonRight = Button_New(x + w - 16, y + h - 16, 16, h, palette);
-			scrollBar->rectThumb = (SDL_Rect) {x + value + 16, y , 16, h};
+			scrollBar->scrollPosition = 0;
+			scrollBar->contentScrollPosition = 0;
 			break;
 		}
 
@@ -87,23 +79,44 @@ void ScrollBar_Update(ScrollBar *scrollBar, Mouse *mouse) {
 	switch(scrollBar->orientation) {
 	case SCROLLBAR_ORIENTATION_VERTICAL:
 		if(Button_Update(scrollBar->buttonUp, mouse)) {
-			if(scrollBar->value > scrollBar->begin) scrollBar->value--;
+			scrollBar->scrollPosition--;
 		}
 		if(Button_Update(scrollBar->buttonDown, mouse)) {
-			if(scrollBar->value < scrollBar->end) scrollBar->value++;
+			scrollBar->scrollPosition++;
 		}
-		scrollBar->value = clamp(scrollBar->value,scrollBar->begin,scrollBar->end);
-		scrollBar->rectThumb.y = (double) scrollBar->value / (scrollBar->end - scrollBar->begin) * (scrollBar->h - 16 * 3) + 16;
+		scrollBar->viewPortSize = 480-32-16;
+		scrollBar->trackArea = 480-32-16-16-16;			
+		scrollBar->contentSize = scrollBar->canvas->gridShow ? scrollBar->canvas->h * (scrollBar->canvas->pixelSize + 1) + 1 : scrollBar->canvas->h * scrollBar->canvas->pixelSize;
+
+		scrollBar->scrollPosition = clamp(scrollBar->scrollPosition, 0, scrollBar->contentSize - scrollBar->viewPortSize);
+		scrollBar->thumbSize = (int)((double) scrollBar->viewPortSize / scrollBar->contentSize * scrollBar->trackArea);
+		scrollBar->thumbPosition = (double) scrollBar->scrollPosition / (scrollBar->contentSize - scrollBar->viewPortSize) * (scrollBar->trackArea - scrollBar->thumbSize);		
+		scrollBar->rectThumb = (SDL_Rect) {scrollBar->x, scrollBar->y + scrollBar->thumbPosition + 16, scrollBar->w, scrollBar->thumbSize };
+
+		scrollBar->contentScrollPosition = (int)((double)scrollBar->thumbPosition / (scrollBar->trackArea - scrollBar->thumbSize) * (scrollBar->contentSize - scrollBar->viewPortSize));
+
+		scrollBar->canvas->y = -scrollBar->contentScrollPosition;
+		
 		break;
 	case SCROLLBAR_ORIENTATION_HORIZONTAL:
 		if(Button_Update(scrollBar->buttonLeft, mouse)) {
-			if(scrollBar->value > scrollBar->begin) scrollBar->value--;
+			scrollBar->scrollPosition--;
 		}
 		if(Button_Update(scrollBar->buttonRight, mouse)) {
-			if(scrollBar->value < scrollBar->end) scrollBar->value++;
+			scrollBar->scrollPosition++;
 		}
-		scrollBar->value = clamp(scrollBar->value,scrollBar->begin,scrollBar->end);
-		scrollBar->rectThumb.x = (double) scrollBar->value / (scrollBar->end - scrollBar->begin) * (scrollBar->w - 16 * 3) + 16;
+		scrollBar->viewPortSize = 640-16;
+		scrollBar->contentSize = scrollBar->canvas->gridShow ? scrollBar->canvas->w * (scrollBar->canvas->pixelSize + 1) + 1 : scrollBar->canvas->w * scrollBar->canvas->pixelSize;
+		scrollBar->trackArea = 640-16-16-16;
+
+		scrollBar->scrollPosition = clamp(scrollBar->scrollPosition, 0, scrollBar->contentSize - scrollBar->viewPortSize);
+		scrollBar->thumbSize = (int)((double) scrollBar->viewPortSize / scrollBar->contentSize * scrollBar->trackArea);
+		scrollBar->thumbPosition = (double) scrollBar->scrollPosition / (scrollBar->contentSize - scrollBar->viewPortSize) * (scrollBar->trackArea - scrollBar->thumbSize);		
+		scrollBar->rectThumb = (SDL_Rect) {scrollBar->x + scrollBar->thumbPosition + 16, scrollBar->y, scrollBar->thumbSize, scrollBar->h };
+
+		scrollBar->contentScrollPosition = (int)((double)scrollBar->thumbPosition / (scrollBar->trackArea - scrollBar->thumbSize) * (scrollBar->contentSize - scrollBar->viewPortSize));
+
+		scrollBar->canvas->x = -scrollBar->contentScrollPosition;
 		break;			
 	default: break;
 	}

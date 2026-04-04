@@ -5,6 +5,7 @@
 
 #include "types.h"
 #include "palette.h"
+#include "canvas.h"
 #include "button.h"
 
 typedef enum {
@@ -16,24 +17,28 @@ typedef enum {
 typedef struct {
 	ScrollBarOrientation orientation;
 	int x,y,w,h;
-	int begin,end,value;
-	byte color;
 	Palette *palette;
+	Canvas *canvas;
 
 	Button *buttonUp;
 	Button *buttonDown;
 	Button *buttonLeft;
 	Button *buttonRight;
 	SDL_Rect rectThumb;
-
+	
+	int thumbSize;
+	int viewPortSize;
+	int contentSize;
+	int trackArea;
+	int thumbPosition;
+	int scrollPosition;
+	int contentScrollPosition;
 } ScrollBar;
 
 ScrollBar *ScrollBar_New(
+		Palette *palette, Canvas *canvas,
 		ScrollBarOrientation orientation,
-		int x, int y, int w, int h, 
-		int begin, int end, int value, 
-		byte color,
-		Palette *palette);
+		int x, int y, int w, int h);
 
 void ScrollBar_Draw(ScrollBar *scrollbar, SDL_Renderer *renderer);
 void ScrollBar_Update(ScrollBar *scrollbar, Mouse *mouse);
