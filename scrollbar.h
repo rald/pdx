@@ -1,4 +1,4 @@
-/* file: scrollbar.h */
+/* scrollbar.h */
 
 #ifndef SCROLLBAR_H
 #define SCROLLBAR_H
@@ -27,7 +27,7 @@ typedef struct {
 	Button *buttonLeft;
 	Button *buttonRight;
 	SDL_Rect rectThumb;
-	
+
 	int thumbSize;
 	int viewPortSize;
 	int contentSize;
@@ -35,6 +35,8 @@ typedef struct {
 	int thumbPosition;
 	int scrollPosition;
 	int contentScrollPosition;
+	int dragging;
+	int dragOffset;
 } ScrollBar;
 
 ScrollBar *ScrollBar_New(

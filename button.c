@@ -19,32 +19,41 @@ void Button_Draw(Button *button, SDL_Renderer *renderer) {
 	case BUTTON_STATE_UP:
 		SDL_SetRenderDrawColor(
 			renderer,
-			button->palette->colors[12].r,
-			button->palette->colors[12].g,
-			button->palette->colors[12].b,
+			button->palette->colors[14].r,
+			button->palette->colors[14].g,
+			button->palette->colors[14].b,
 			255);
-		SDL_RenderDrawRect(renderer, &rect);
+		SDL_RenderFillRect(renderer, &rect);
 		break;
 	case BUTTON_STATE_OVER:
 		SDL_SetRenderDrawColor(
 			renderer,
-			button->palette->colors[12].r,
-			button->palette->colors[12].g,
-			button->palette->colors[12].b,
+			button->palette->colors[13].r,
+			button->palette->colors[13].g,
+			button->palette->colors[13].b,
 			255);
 		SDL_RenderFillRect(renderer, &rect);
 		break;
 	case BUTTON_STATE_DOWN: 
 		SDL_SetRenderDrawColor(
 			renderer,
-			button->palette->colors[12].r,
-			button->palette->colors[12].g,
-			button->palette->colors[12].b,
+			button->palette->colors[14].r,
+			button->palette->colors[14].g,
+			button->palette->colors[14].b,
 			255);
-		SDL_RenderDrawRect(renderer, &rect);
+		SDL_RenderFillRect(renderer, &rect);
 		break;
 	default: break;
 	}
+
+	SDL_SetRenderDrawColor(
+		renderer,
+		button->palette->colors[12].r,
+		button->palette->colors[12].g,
+		button->palette->colors[12].b,
+		255);
+
+	SDL_RenderDrawRect(renderer, &rect);
 }
 
 bool Button_Update(Button *button, Mouse *mouse) {
