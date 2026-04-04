@@ -1,13 +1,22 @@
 #include <SDL2/SDL.h>
 
 #include "common.h"
+#include "mouse.h"
 #include "canvas.h"
+#include "palette.h"
+
 #include "gifenc.h"
 #include "gifdec.h"
 
 #define GAME_TITLE "Pixel Dancer"
 
-SDL_Color palette[]={
+#define CANVAS_WIDTH   64
+#define CANVAS_HEIGHT  64
+#define CANVAS_NFRAME   4
+
+
+
+SDL_Color colors[]={
     { 26, 28, 44},
     { 93, 39, 93},
     {177, 62, 83},
@@ -26,7 +35,7 @@ SDL_Color palette[]={
     { 51, 60, 87},
 };
 
-size_t npalette=16;
+size_t ncolors=16;
 
 bool quit = false;
 SDL_Window *window = NULL;
@@ -34,74 +43,18 @@ SDL_Renderer *renderer = NULL;
 SDL_Event event;
 
 Canvas *canvas = NULL;
+Mouse *mouse = NULL;
+Palette *palette = NULL;
 
 int xScroll,yScroll;
 byte currentColor=12;
 
-bool inrect(int x, int y, int rx, int ry, int rw, int rh) {
-	return x >= rx && x < rx + rw && y >= ry && y < ry + rh;
-}
-
-typedef struct {
-	SDL_Cursor *cursor;
-	int x,y;
-	Uint32 state;
-} Mouse;
-
-Mouse *mouse = NULL;
-
-Mouse *Mouse_New(char *filename,int x,int y,SDL_Color transparent) {
-	Mouse *mouse=malloc(sizeof(*mouse));
-	SDL_Surface *surface = NULL;
-	if(mouse) {
-		mouse->x=x;
-		mouse->y=y;
-
-		surface=SDL_LoadBMP(filename);
-		SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, transparent.r, transparent.g, transparent.b));
-		mouse->cursor = SDL_CreateColorCursor(surface, 0, 0); 
-
-		SDL_FreeSurface(surface);
-	}
-	return mouse;
-}
-
-void Mouse_Update(Mouse *mouse) {
-	mouse->state=SDL_GetMouseState(&mouse->x,&mouse->y);
-}
-
-void Palette_Draw(SDL_Renderer *renderer,SDL_Color *palette,size_t npalette, byte *currentColor, Mouse *mouse) {
-	for(int i = 0; i < npalette; i++) {
-		
-		SDL_Rect rect = {i*32,SCREEN_HEIGHT-32,32,32};
-		
-		SDL_SetRenderDrawColor(renderer, palette[i].r, palette[i].g, palette[i].b, 255);
-		SDL_RenderFillRect(renderer, &rect);
-
-		if((mouse->state & SDL_BUTTON_LMASK) && inrect(mouse->x, mouse->y, rect.x, rect.y, rect.h, rect.w)) {
-			*currentColor = i;
-		}
-
-		if(i == *currentColor) {
-			SDL_SetRenderDrawColor(renderer, palette[12].r, palette[12].g, palette[12].b, 255);
-			SDL_RenderDrawRect(renderer, &rect);
-
-			rect.x+=1;
-			rect.y+=1;
-			rect.w-=2;
-			rect.h-=2;
-
-			SDL_SetRenderDrawColor(renderer, palette[0].r, palette[0].g, palette[0].b, 255);
-			SDL_RenderDrawRect(renderer, &rect);
-		}
-	}
-}
-
 void ScrollBarVertical_Draw(
 		SDL_Renderer *renderer,
+		Palette *palette,
 		int x, int y, int w, int h, 
 		int begin, int end, int value, 
-		byte color, SDL_Color *palette, size_t npalette) {
+		byte color) {
 
 	SDL_Rect clip = { x, y, x + w, y + h };
 	SDL_RenderSetClipRect(renderer, &clip);
@@ -109,7 +62,7 @@ void ScrollBarVertical_Draw(
 	SDL_Rect rectUpButton = {x, y, w, 16};	
 	SDL_Rect rectDownButton = { x + w - 16, y + h - 16, w, 16};
 
-	SDL_SetRenderDrawColor(renderer, palette[color].r, palette[color].g, palette[color].b, 255);
+	SDL_SetRenderDrawColor(renderer, palette->colors[color].r, palette->colors[color].g, palette->colors[color].b, 255);
 	SDL_RenderDrawRect(renderer, &rectUpButton);
 	SDL_RenderDrawRect(renderer, &rectDownButton);
 	
@@ -118,9 +71,10 @@ void ScrollBarVertical_Draw(
 
 void ScrollBarHorizontal_Draw(
 		SDL_Renderer *renderer,
+		Palette *palette,
 		int x, int y, int w, int h, 
 		int begin, int end, int value, 
-		byte color, SDL_Color *palette, size_t npalette) {
+		byte color) {
 
 	SDL_Rect clip = { x, y, x + w, y + h };
 	SDL_RenderSetClipRect(renderer, &clip);
@@ -128,7 +82,7 @@ void ScrollBarHorizontal_Draw(
 	SDL_Rect rectLeftButton = {x, y, 16, h};	
 	SDL_Rect rectRightButton = { x + w - 16, y + h - 16, 16, h};
 
-	SDL_SetRenderDrawColor(renderer, palette[color].r, palette[color].g, palette[color].b, 255);
+	SDL_SetRenderDrawColor(renderer, palette->colors[color].r, palette->colors[color].g, palette->colors[color].b, 255);
 	SDL_RenderDrawRect(renderer, &rectLeftButton);
 	SDL_RenderDrawRect(renderer, &rectRightButton);
 	
@@ -149,23 +103,25 @@ int main(int argc,char *argv[]) {
                SDL_RENDERER_ACCELERATED |
                SDL_RENDERER_TARGETTEXTURE);
                
-	mouse=Mouse_New("mouse.bmp",SCREEN_WIDTH/2,SCREEN_HEIGHT/2,palette[15]);
+               
+	palette = Palette_New(colors, ncolors, 0, SCREEN_HEIGHT - 32, 32 * ncolors, 32, 12, 32);
+
+	mouse = Mouse_New("images/mouse.bmp",SCREEN_WIDTH/2,SCREEN_HEIGHT/2,colors[15]);
 	SDL_SetCursor(mouse->cursor);
 
 	canvas=Canvas_New(
-           8,    /* x          */ 
-           8,    /* y          */ 
-          16,    /* w          */
-          16,    /* h          */
-           4,    /* nframe     */
-          -1,    /* tranparent */
-           2,    /* color      */
-           6,    /* gridColor  */ 
-        true,    /* gridShow   */ 
-          16,    /* pixelSize  */
-           0,    /* frame      */
-     palette,    /* palette    */
-    npalette     /* npalette   */
+                                palette,    /* palette     */
+       (SCREEN_WIDTH-CANVAS_WIDTH-16)/2,    /* x           */ 
+  (SCREEN_HEIGHT-CANVAS_HEIGHT-32-16)/2,    /* y           */ 
+                           CANVAS_WIDTH,    /* w           */
+                          CANVAS_HEIGHT,    /* h           */
+                          CANVAS_NFRAME,    /* nframe      */
+                                     -1,    /* transparent */
+                                     12,    /* color       */
+                                      6,    /* gridColor   */ 
+                                  false,    /* gridShow    */ 
+                                      1,    /* pixelSize   */
+                                      0    /* frame       */
 	);
 
     while(!quit) {
@@ -180,48 +136,44 @@ int main(int argc,char *argv[]) {
                 case SDLK_ESCAPE:
                     quit = true;
                     break;
-                case SDLK_g:
-                	canvas->gridShow = !canvas->gridShow;
-                	break;	
                 default: break;
                 }
                 break;
-            case SDL_MOUSEWHEEL:
-				xScroll = event.wheel.x; 
-				yScroll = event.wheel.y; 
-				if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
-				    xScroll *= -1;
-				    yScroll *= -1;
-				}
-				if(canvas->pixelSize>1 && yScroll<0) {canvas->pixelSize-=1; yScroll=0; }
-				if(canvas->pixelSize<32 && yScroll>0) {canvas->pixelSize+=1; yScroll=0; }
-            	break;
             default: break;
             }
+            
+            Mouse_EventHandle(mouse,event);
+            Canvas_EventHandle(canvas,event);
+            Palette_EventHandle(palette,event);
         }
         
-        Mouse_Update(mouse);
 	
-		SDL_SetRenderDrawColor(renderer, palette[0].r, palette[0].g, palette[0].b, 255);
+		SDL_SetRenderDrawColor(renderer, palette->colors[0].r, palette->colors[0].g, palette->colors[0].b, 255);
 		SDL_RenderClear(renderer);
+
+        Mouse_Update(mouse);
+		Palette_Update(palette, mouse);	
+		Canvas_Update(canvas, mouse);	
 		
 		Canvas_Draw(canvas,renderer);
 		
 		ScrollBarVertical_Draw(
 			renderer,
+			palette,
 			SCREEN_WIDTH - 16, 0, 
 			16, SCREEN_HEIGHT - 32 - 16,
 			0, 256, 256/2, 
-			12, palette, npalette);
+			12);
 
 		ScrollBarHorizontal_Draw(
 			renderer,
+			palette,
 			0, SCREEN_HEIGHT - 32 - 16, 
 			SCREEN_WIDTH - 16, 16,
 			0, 256, 256/2, 
-			12, palette, npalette);
+			12);
 
-		Palette_Draw(renderer, palette, npalette, &currentColor, mouse);
+		Palette_Draw(palette, renderer, mouse);
 		
 	    SDL_RenderPresent(renderer);
 	    

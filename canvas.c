@@ -1,6 +1,7 @@
 #include "canvas.h"
 
 Canvas *Canvas_New(
+		Palette *palette,
 		int x, int y, 
 		size_t w, size_t h, 
 		size_t nframe, 
@@ -9,9 +10,7 @@ Canvas *Canvas_New(
 		byte gridColor, 
 		bool gridShow,  
 		int pixelSize, 
-		size_t frame,
-		SDL_Color *palette,
-		size_t npalette) {
+		size_t frame) {
 
 	Canvas *canvas = malloc(sizeof(*canvas));
 	if(canvas) {
@@ -32,10 +31,45 @@ Canvas *Canvas_New(
 		canvas->gridShow = gridShow;
 		
 		canvas->palette = palette;
-		canvas->npalette = npalette;
 	}
 
 	return canvas;
+}
+
+void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
+	switch(event.type) {
+	case SDL_KEYDOWN:
+		switch(event.key.keysym.sym) {
+		case SDLK_g:
+			canvas->gridShow = !canvas->gridShow;
+			break;	
+		default: break;
+		}
+		break;
+	case SDL_MOUSEWHEEL:
+		int xScroll = event.wheel.x; 
+		int yScroll = event.wheel.y; 
+		if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+			xScroll *= -1;
+			yScroll *= -1;
+		}
+		
+		if(canvas->pixelSize>1 && yScroll<0) {
+			canvas->pixelSize-=1;
+			yScroll=0;
+		}
+		
+		if(canvas->pixelSize<32 && yScroll>0) {
+			canvas->pixelSize+=1;
+			yScroll=0;
+		}
+		
+		break;
+	default: break;
+	}
+}
+
+void Canvas_Update(Canvas *canvas, Mouse *mouse) {
 }
 
 void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer) {
@@ -49,7 +83,14 @@ void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer) {
 		rect.y = canvas->y;
 		rect.w = canvas->w * (canvas->pixelSize + 1) + 1;
 		rect.h = canvas->h * (canvas->pixelSize + 1) + 1;
-		SDL_SetRenderDrawColor(renderer, canvas->palette[canvas->gridColor].r, canvas->palette[canvas->gridColor].g, canvas->palette[canvas->gridColor].b, 255);
+
+		SDL_SetRenderDrawColor(
+			renderer, 
+			canvas->palette->colors[canvas->gridColor].r, 
+			canvas->palette->colors[canvas->gridColor].g, 
+			canvas->palette->colors[canvas->gridColor].b, 
+			255);
+
 		SDL_RenderFillRect(renderer, &rect);
 	}
 
@@ -72,11 +113,15 @@ void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer) {
 					rect.w = canvas->pixelSize;
 					rect.h = canvas->pixelSize;
 				}
+				
+				if(rect.x>=SCREEN_WIDTH) break;
 
-				SDL_SetRenderDrawColor(renderer, canvas->palette[l].r, canvas->palette[l].g, canvas->palette[l].b, 255);
+				SDL_SetRenderDrawColor(renderer, canvas->palette->colors[l].r, canvas->palette->colors[l].g, canvas->palette->colors[l].b, 255);
 				SDL_RenderFillRect(renderer, &rect);
 			}
 		}
+		
+		if(rect.y>=SCREEN_HEIGHT) break;
 	}
 
 	SDL_RenderSetClipRect(renderer, NULL);
