@@ -24,7 +24,7 @@ typedef struct {
 	Button *buttonDown;
 	Button *buttonLeft;
 	Button *buttonRight;
-	Button *buttonThumb;
+	SDL_Rect rectThumb;
 
 } ScrollBar;
 

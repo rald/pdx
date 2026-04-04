@@ -77,18 +77,18 @@ int main(int argc,char *argv[]) {
 
 
 	canvas=Canvas_New(
-                                palette,    /* palette     */
-       (SCREEN_WIDTH-CANVAS_WIDTH-16)/2,    /* x           */ 
-  (SCREEN_HEIGHT-CANVAS_HEIGHT-32-16)/2,    /* y           */ 
-                           CANVAS_WIDTH,    /* w           */
-                          CANVAS_HEIGHT,    /* h           */
-                          CANVAS_NFRAME,    /* nframe      */
-                                     -1,    /* transparent */
-                                     12,    /* color       */
-                                      6,    /* gridColor   */ 
-                                  false,    /* gridShow    */ 
-                                      1,    /* pixelSize   */
-                                      0    /* frame       */
+				palette,    /* palette     */
+				      0,    /* x           */ 
+				      0,    /* y           */ 
+		   CANVAS_WIDTH,    /* w           */
+		  CANVAS_HEIGHT,    /* h           */
+		  CANVAS_NFRAME,    /* nframe      */
+				     -1,    /* transparent */
+				     12,    /* color       */
+				      6,    /* gridColor   */ 
+				  false,    /* gridShow    */ 
+				      1,    /* pixelSize   */
+				      0    /* frame       */
 	);
 	
 	scrollBarVertical = ScrollBar_New(
