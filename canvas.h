@@ -13,29 +13,29 @@
 typedef struct {
 	Palette *palette;
 
-	size_t w,h;
-	size_t nframe;
-	ssize_t transparent;
+	int w,h;
+	int nframe;
+	int transparent;
 	byte *pixels;
 	
 	int x,y;
 	byte gridColor;
 	bool gridShow;
-	size_t pixelSize;
-	size_t frame;
+	int pixelSize;
+	int frame;
 	} Canvas;
 
 Canvas *Canvas_New(
 	Palette *palette,
 	int x, int y, 
-	size_t w, size_t h, 
-	size_t nframe, 
-	ssize_t transparent, 
+	int w, int h, 
+	int nframe, 
+	int transparent, 
 	byte color, 
 	byte gridColor, 
 	bool gridShow,  
 	int pixelSize, 
-	size_t frame
+	int frame
 );
 
 void Canvas_EventHandle(Canvas *canvas,SDL_Event event);
