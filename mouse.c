@@ -17,8 +17,8 @@ Mouse *Mouse_New(char *filename,int x,int y,SDL_Color transparent) {
 }
 
 void Mouse_EventHandle(Mouse *mouse, SDL_Event event) {
-	mouse->state = SDL_GetMouseState(&mouse->x, &mouse->y);
 }
 
 void Mouse_Update(Mouse *mouse) {
+	mouse->state = SDL_GetMouseState(&mouse->x, &mouse->y);
 }

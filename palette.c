@@ -26,11 +26,10 @@ void Palette_Update(Palette *palette, Mouse *mouse) {
 				palette->currentColor=i;
 			}
 		}
-	
 	}
 }
 
-void Palette_Draw(Palette *palette, SDL_Renderer *renderer, Mouse *mouse) {
+void Palette_Draw(Palette *palette, SDL_Renderer *renderer) {
 
 	SDL_Rect clip = { palette->x, palette->y, palette->w, palette->h};
 	SDL_RenderSetClipRect(renderer, &clip);

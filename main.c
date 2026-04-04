@@ -4,6 +4,9 @@
 #include "mouse.h"
 #include "canvas.h"
 #include "palette.h"
+#include "button.h"
+#include "scrollbar.h"
+
 
 #include "gifenc.h"
 #include "gifdec.h"
@@ -46,49 +49,11 @@ Canvas *canvas = NULL;
 Mouse *mouse = NULL;
 Palette *palette = NULL;
 
+ScrollBar *scrollBarVertical;
+ScrollBar *scrollBarHorizontal;
+
 int xScroll,yScroll;
 byte currentColor=12;
-
-void ScrollBarVertical_Draw(
-		SDL_Renderer *renderer,
-		Palette *palette,
-		int x, int y, int w, int h, 
-		int begin, int end, int value, 
-		byte color) {
-
-	SDL_Rect clip = { x, y, x + w, y + h };
-	SDL_RenderSetClipRect(renderer, &clip);
-
-	SDL_Rect rectUpButton = {x, y, w, 16};	
-	SDL_Rect rectDownButton = { x + w - 16, y + h - 16, w, 16};
-
-	SDL_SetRenderDrawColor(renderer, palette->colors[color].r, palette->colors[color].g, palette->colors[color].b, 255);
-	SDL_RenderDrawRect(renderer, &rectUpButton);
-	SDL_RenderDrawRect(renderer, &rectDownButton);
-	
-	SDL_RenderSetClipRect(renderer, NULL);
-}
-
-void ScrollBarHorizontal_Draw(
-		SDL_Renderer *renderer,
-		Palette *palette,
-		int x, int y, int w, int h, 
-		int begin, int end, int value, 
-		byte color) {
-
-	SDL_Rect clip = { x, y, x + w, y + h };
-	SDL_RenderSetClipRect(renderer, &clip);
-
-	SDL_Rect rectLeftButton = {x, y, 16, h};	
-	SDL_Rect rectRightButton = { x + w - 16, y + h - 16, 16, h};
-
-	SDL_SetRenderDrawColor(renderer, palette->colors[color].r, palette->colors[color].g, palette->colors[color].b, 255);
-	SDL_RenderDrawRect(renderer, &rectLeftButton);
-	SDL_RenderDrawRect(renderer, &rectRightButton);
-	
-	SDL_RenderSetClipRect(renderer, NULL);
-}
-
 
 int main(int argc,char *argv[]) {
 
@@ -106,8 +71,10 @@ int main(int argc,char *argv[]) {
                
 	palette = Palette_New(colors, ncolors, 0, SCREEN_HEIGHT - 32, 32 * ncolors, 32, 12, 32);
 
-	mouse = Mouse_New("images/mouse.bmp",SCREEN_WIDTH/2,SCREEN_HEIGHT/2,colors[15]);
+	mouse = Mouse_New("images/mouse.bmp", SCREEN_WIDTH/2, SCREEN_HEIGHT/2, colors[15]);
 	SDL_SetCursor(mouse->cursor);
+	SDL_WarpMouseInWindow(window, mouse->x, mouse->y);
+
 
 	canvas=Canvas_New(
                                 palette,    /* palette     */
@@ -123,6 +90,24 @@ int main(int argc,char *argv[]) {
                                       1,    /* pixelSize   */
                                       0    /* frame       */
 	);
+	
+	scrollBarVertical = ScrollBar_New(
+		SCROLLBAR_ORIENTATION_VERTICAL,
+		SCREEN_WIDTH - 16, 0, 
+		16, SCREEN_HEIGHT - 32 - 16,
+		0, 256, 0, 
+		12,
+		palette);
+
+	scrollBarHorizontal = ScrollBar_New(
+		SCROLLBAR_ORIENTATION_HORIZONTAL,
+		0, SCREEN_HEIGHT - 32 - 16, 
+		SCREEN_WIDTH - 16, 16,
+		0, 256, 0, 
+		12,
+		palette);
+
+
 
     while(!quit) {
 
@@ -154,26 +139,13 @@ int main(int argc,char *argv[]) {
         Mouse_Update(mouse);
 		Palette_Update(palette, mouse);	
 		Canvas_Update(canvas, mouse);	
+		ScrollBar_Update(scrollBarVertical, mouse);
+		ScrollBar_Update(scrollBarHorizontal, mouse);
 		
-		Canvas_Draw(canvas,renderer);
-		
-		ScrollBarVertical_Draw(
-			renderer,
-			palette,
-			SCREEN_WIDTH - 16, 0, 
-			16, SCREEN_HEIGHT - 32 - 16,
-			0, 256, 256/2, 
-			12);
-
-		ScrollBarHorizontal_Draw(
-			renderer,
-			palette,
-			0, SCREEN_HEIGHT - 32 - 16, 
-			SCREEN_WIDTH - 16, 16,
-			0, 256, 256/2, 
-			12);
-
-		Palette_Draw(palette, renderer, mouse);
+		Palette_Draw(palette, renderer);
+		Canvas_Draw(canvas, renderer);
+		ScrollBar_Draw(scrollBarVertical,renderer);
+		ScrollBar_Draw(scrollBarHorizontal,renderer);
 		
 	    SDL_RenderPresent(renderer);
 	    
