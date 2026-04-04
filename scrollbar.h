@@ -1,3 +1,5 @@
+/* file: scrollbar.h */
+
 #ifndef SCROLLBAR_H
 #define SCROLLBAR_H
 
