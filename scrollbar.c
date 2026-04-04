@@ -30,6 +30,7 @@ ScrollBar *ScrollBar_New(
 			scrollBar->scrollPosition = 0;
 			scrollBar->contentScrollPosition = 0;
 			break;
+		default: break;
 		}
 
 	}	
