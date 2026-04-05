@@ -137,9 +137,63 @@ void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color) {
 	}
 }
 
-ssize_t Canvas_ReadPoint(Canvas *canvas, int x, int y) {
+int Canvas_ReadPoint(Canvas *canvas, int x, int y) {
 	if(x>=0 && x<canvas->w && y>=0 && y<canvas->h) {
 		return canvas->pixels[canvas->frame*canvas->w*canvas->h+canvas->y*canvas->w+canvas->x];
 	}
 	return -1;
 }
+
+Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
+	int i,j,k,l;
+	int c;
+	char *hex="0123456789ABCDEF";
+	Canvas *canvas=malloc(sizeof(*canvas));
+	FILE *fp = NULL;
+
+	if(canvas) {
+		canvas->palette = palette;
+		canvas->x = 0;
+		canvas->y = 0;
+		canvas->gridColor = 6;
+		canvas->gridShow = false;
+		canvas->pixelSize = 1;
+		canvas->frame = 0;
+
+		fp=fopen(filename,"rb");
+		if(!fp) {
+			fprintf(stderr,"Error opening file %s: %s\n",filename,strerror(errno));
+			exit(-1);
+		}
+		
+		fscanf(fp,"%d,%d,%d,%d",&canvas->w,&canvas->h,&canvas->nframe,&canvas->transparent);
+
+		canvas->pixels = malloc((canvas->w * canvas->h * canvas->nframe) * sizeof(*canvas->pixels));
+		for(i = 0; i < canvas->w * canvas->h * canvas->nframe; i++) canvas->pixels[i]=12;
+		
+		i=0; l=1;	
+		while((c=fgetc(fp))!=EOF) {
+			if(c==' ' || c=='\t') continue;
+			if(c=='\n') { l++; continue; }
+			j=-1;
+			for(k=0;k<16;k++) {
+				if(c==hex[k]) {
+					j=k;
+					break;
+				}
+			}
+			if(j==-1) {
+				fprintf(stderr,"Line %d: invalid character.\n",l);
+				exit(-1);
+			}
+			canvas->pixels[i++]=j;
+		}
+		fclose(fp);
+
+	}
+
+	return canvas;
+}
+
+
+

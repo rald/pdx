@@ -72,20 +72,17 @@ int main(int argc,char *argv[]) {
 	SDL_SetCursor(mouse->cursor);
 	SDL_WarpMouseInWindow(window, mouse->x, mouse->y);
 
+
+/*
 	canvas=Canvas_New(
-				palette,    /* palette     */
-				      0,    /* x           */ 
-				      0,    /* y           */ 
-		   CANVAS_WIDTH,    /* w           */
-		  CANVAS_HEIGHT,    /* h           */
-		  CANVAS_NFRAME,    /* nframe      */
-				     -1,    /* transparent */
-				     12,    /* color       */
-				      6,    /* gridColor   */ 
-				  false,    /* gridShow    */ 
-				      1,    /* pixelSize   */
-				      0    /* frame       */
+		palette,
+		0,0,256,256,4,-1,
+		12,6,false,1,0
 	);
+*/
+
+	canvas=Canvas_LoadCVS("cvs/dog.cvs", palette);
+
 	
 	scrollBarVertical = ScrollBar_New(
 		palette, canvas,

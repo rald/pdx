@@ -31,10 +31,12 @@ void Palette_Update(Palette *palette, Mouse *mouse) {
 
 void Palette_Draw(Palette *palette, SDL_Renderer *renderer) {
 
+	int i;
+
 	SDL_Rect clip = { palette->x, palette->y, palette->w, palette->h};
 	SDL_RenderSetClipRect(renderer, &clip);
 
-	for(int i = 0; i < palette->ncolors; i++) {
+	for(i = 0; i < palette->ncolors; i++) {
 		
 		SDL_Rect rect = {i*32,SCREEN_HEIGHT-32,32,32};
 		

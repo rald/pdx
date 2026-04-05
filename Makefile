@@ -3,7 +3,7 @@ EXE = game
 
 CFLAGS = -lSDL2 -lgifenc -lgifdec -g -I. -I lecram/gifenc -I lecram/gifdec
 LDFLAGS = -L. -L lecram/gifenc -L lecram/gifdec
-LDLIBS = -std=c11 -lm -g
+LDLIBS = -std=c89 -lm -g
 
 OBJS = main.o utils.o canvas.o mouse.o palette.o button.o scrollbar.o
 
@@ -21,7 +21,7 @@ libgifdec.a: lecram/gifdec/gifdec.c lecram/gifdec/gifdec.h
 	ar rcs lecram/gifdec/libgifdec.a lecram/gifdec/gifdec.o
 
 %.o: %.c
-	$(CC) -c $< -o $@ $(LDFLAGS) $(CFLAGS)
+	$(CC) -c $< -o $@ $(LDFLAGS) $(CFLAGS) $(LDLIBS)
 
 clean:
 	rm game

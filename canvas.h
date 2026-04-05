@@ -2,7 +2,11 @@
 #define CANVAS_H
 
 #include <SDL2/SDL.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <errno.h>
 
 #include "common.h"
 #include "types.h"
@@ -42,6 +46,9 @@ void Canvas_EventHandle(Canvas *canvas,SDL_Event event);
 void Canvas_Update(Canvas *canvas, Mouse *mouse);
 void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer);
 void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color);
-ssize_t Canvas_ReadPoint(Canvas *canvas, int x, int y);
+int Canvas_ReadPoint(Canvas *canvas, int x, int y);
+Canvas *Canvas_LoadCVS(char *filename, Palette *palette);
 
 #endif
+
+
