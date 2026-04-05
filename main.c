@@ -4,6 +4,7 @@
 #include "mouse.h"
 #include "canvas.h"
 #include "palette.h"
+#include "target.h"
 #include "button.h"
 #include "scrollbar.h"
 
@@ -48,6 +49,7 @@ SDL_Event event;
 Canvas *canvas = NULL;
 Mouse *mouse = NULL;
 Palette *palette = NULL;
+Target *target = NULL;
 
 ScrollBar *scrollBarVertical;
 ScrollBar *scrollBarHorizontal;
@@ -82,6 +84,8 @@ int main(int argc,char *argv[]) {
 */
 
 	canvas=Canvas_LoadCVS("cvs/dog.cvs", palette);
+	
+	target=Target_New(palette,0,0);
 
 	
 	scrollBarVertical = ScrollBar_New(
@@ -126,14 +130,19 @@ int main(int argc,char *argv[]) {
 		SDL_RenderClear(renderer);
 
         Mouse_Update(mouse);
+		Target_Update(target, mouse);
 		Palette_Update(palette, mouse);	
 		ScrollBar_Update(scrollBarVertical, mouse);
 		ScrollBar_Update(scrollBarHorizontal, mouse);
+
+		Canvas_Draw(canvas, renderer, (SDL_Rect) {0, 0, SCREEN_WIDTH - 16, SCREEN_HEIGHT - 32 - 16} );
+		Target_Draw(target, renderer);
 		
 		Palette_Draw(palette, renderer);
-		Canvas_Draw(canvas, renderer, (SDL_Rect) {0, 0, SCREEN_WIDTH - 16, SCREEN_HEIGHT - 32 - 16} );
+
 		ScrollBar_Draw(scrollBarVertical,renderer);
 		ScrollBar_Draw(scrollBarHorizontal,renderer);
+		
 		
 	    SDL_RenderPresent(renderer);
 	    

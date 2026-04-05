@@ -1,40 +1,85 @@
-/* canvas.c */
+/* file: canvas.c */
 
 #include "canvas.h"
 
+/* canvas.c: fix Canvas_New */
 Canvas *Canvas_New(
-		Palette *palette,
-		int x, int y, 
-		int w, int h, 
-		int nframe, 
-		int transparent, 
-		byte color, 
-		byte gridColor, 
-		bool gridShow,  
-		int pixelSize, 
-		int frame) {
-	
-	int i;
+    Palette *palette,
+    int x, int y, int w, int h,
+    int nframe,
+    int transparent,
+    byte color,
+    byte gridColor,
+    bool gridShow,
+    int pixelSize,
+    int frame) {
 
-	Canvas *canvas = malloc(sizeof(*canvas));
+    int i;
+    Canvas *canvas = malloc(sizeof(*canvas));
+    if(canvas) {
+        canvas->palette = palette;
+        canvas->w = w;
+        canvas->h = h;
+        canvas->nframe = nframe;
+        canvas->transparent = transparent;
+        canvas->pixels = calloc(w * h * nframe, sizeof(*canvas->pixels));
+        for(i = 0; i < w * h * nframe; i++) canvas->pixels[i] = color;
+        canvas->pixelSize = pixelSize;
+        canvas->x = x;
+        canvas->y = y;
+        canvas->frame = frame;
+        canvas->gridColor = gridColor;
+        canvas->gridShow = gridShow;
+    }
+    return canvas;
+}
+
+Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
+	int i,j,k,l;
+	int c;
+	char *hex="0123456789ABCDEF";
+	Canvas *canvas=malloc(sizeof(*canvas));
+	FILE *fp = NULL;
+
 	if(canvas) {
-		canvas->w = w;
-		canvas->h = h;
-		canvas->transparent = transparent;
-
-		canvas->pixels = calloc(w * h * nframe,sizeof(*canvas->pixels));
-		for(i = 0; i < w * h * nframe; i++) {
-			canvas->pixels[i]=color;
-		}
-
-		canvas->pixelSize = pixelSize;		
-		canvas->x = x;
-		canvas->y = y;
-		canvas->frame = frame;
-		canvas->gridColor = gridColor;
-		canvas->gridShow = gridShow;
-		
 		canvas->palette = palette;
+		canvas->x = 0;
+		canvas->y = 0;
+		canvas->gridColor = 6;
+		canvas->gridShow = false;
+		canvas->pixelSize = 1;
+		canvas->frame = 0;
+
+		fp=fopen(filename,"rb");
+		if(!fp) {
+			fprintf(stderr,"Error opening file %s: %s\n",filename,strerror(errno));
+			exit(-1);
+		}
+		
+		fscanf(fp,"%d,%d,%d,%d",&canvas->w,&canvas->h,&canvas->nframe,&canvas->transparent);
+
+		canvas->pixels = malloc((canvas->w * canvas->h * canvas->nframe) * sizeof(*canvas->pixels));
+		for(i = 0; i < canvas->w * canvas->h * canvas->nframe; i++) canvas->pixels[i]=12;
+		
+		i=0; l=1;	
+		while((c=fgetc(fp))!=EOF) {
+			if(c==' ' || c=='\t') continue;
+			if(c=='\n') { l++; continue; }
+			j=-1;
+			for(k=0;k<16;k++) {
+				if(c==hex[k]) {
+					j=k;
+					break;
+				}
+			}
+			if(j==-1) {
+				fprintf(stderr,"Line %d: invalid character.\n",l);
+				exit(-1);
+			}
+			canvas->pixels[i++]=j;
+		}
+		fclose(fp);
+
 	}
 
 	return canvas;
@@ -72,7 +117,6 @@ void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
 	default: break;
 	}
 }
-
 
 void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport) {
 
@@ -130,57 +174,4 @@ int Canvas_ReadPoint(Canvas *canvas, int x, int y) {
     }
     return -1;
 }
-
-Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
-	int i,j,k,l;
-	int c;
-	char *hex="0123456789ABCDEF";
-	Canvas *canvas=malloc(sizeof(*canvas));
-	FILE *fp = NULL;
-
-	if(canvas) {
-		canvas->palette = palette;
-		canvas->x = 0;
-		canvas->y = 0;
-		canvas->gridColor = 6;
-		canvas->gridShow = false;
-		canvas->pixelSize = 1;
-		canvas->frame = 0;
-
-		fp=fopen(filename,"rb");
-		if(!fp) {
-			fprintf(stderr,"Error opening file %s: %s\n",filename,strerror(errno));
-			exit(-1);
-		}
-		
-		fscanf(fp,"%d,%d,%d,%d",&canvas->w,&canvas->h,&canvas->nframe,&canvas->transparent);
-
-		canvas->pixels = malloc((canvas->w * canvas->h * canvas->nframe) * sizeof(*canvas->pixels));
-		for(i = 0; i < canvas->w * canvas->h * canvas->nframe; i++) canvas->pixels[i]=12;
-		
-		i=0; l=1;	
-		while((c=fgetc(fp))!=EOF) {
-			if(c==' ' || c=='\t') continue;
-			if(c=='\n') { l++; continue; }
-			j=-1;
-			for(k=0;k<16;k++) {
-				if(c==hex[k]) {
-					j=k;
-					break;
-				}
-			}
-			if(j==-1) {
-				fprintf(stderr,"Line %d: invalid character.\n",l);
-				exit(-1);
-			}
-			canvas->pixels[i++]=j;
-		}
-		fclose(fp);
-
-	}
-
-	return canvas;
-}
-
-
 
