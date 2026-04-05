@@ -1,4 +1,4 @@
-/* mouse.h */
+/* file: mouse.h */
 
 #ifndef MOUSE_H
 #define MOUSE_H

@@ -1,3 +1,5 @@
+/* file: types.h */
+
 #ifndef TYPE_H
 #define TYPE_H
 

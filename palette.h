@@ -1,3 +1,5 @@
+/* file: palette.h */
+
 #ifndef PALETTE_H
 #define PALETTE_H
 

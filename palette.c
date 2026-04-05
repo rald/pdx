@@ -1,3 +1,5 @@
+/* file: palette.c */
+
 #include "palette.h"
 
 Palette *Palette_New(SDL_Color *colors, size_t ncolors, int x, int y, int w, int h, byte currentColor, size_t boxSize) {

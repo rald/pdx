@@ -1,3 +1,5 @@
+/* file: button.c */
+
 #include "button.h"
 
 Button *Button_New(int x, int y, int w, int h, Palette *palette) {

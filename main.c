@@ -1,3 +1,5 @@
+/* file: main.c */
+
 #include <SDL2/SDL.h>
 
 #include "common.h"
@@ -85,7 +87,7 @@ int main(int argc,char *argv[]) {
 
 	canvas=Canvas_LoadCVS("cvs/dog.cvs", palette);
 	
-	target=Target_New(palette,0,0);
+	target=Target_New(palette,canvas,0,0);
 
 	
 	scrollBarVertical = ScrollBar_New(
@@ -142,6 +144,7 @@ int main(int argc,char *argv[]) {
 
 		ScrollBar_Draw(scrollBarVertical,renderer);
 		ScrollBar_Draw(scrollBarHorizontal,renderer);
+		Target_RecheckVisible(target);
 		
 		
 	    SDL_RenderPresent(renderer);

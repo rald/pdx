@@ -1,4 +1,5 @@
-/* MyWindow.c */
+/* file: MyWindow.c */
+
 #include <stdlib.h>
 #include "MyWindow.h"
 

@@ -1,4 +1,5 @@
-/* MyWindow.h */
+/* file: MyWindow.h */
+
 #ifndef MYWINDOW_H
 #define MYWINDOW_H
 

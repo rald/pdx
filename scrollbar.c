@@ -1,4 +1,4 @@
-/* scrollbar.c */
+/* file: scrollbar.c */
 
 #include <stdlib.h>
 #include "scrollbar.h"

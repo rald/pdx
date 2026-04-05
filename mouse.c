@@ -1,4 +1,4 @@
-/* mouse.c */
+/* file: mouse.c */
 
 #include <stdlib.h>
 #include "mouse.h"
