@@ -21,8 +21,12 @@ typedef struct {
 Target *Target_New(Palette *palette, Canvas *canvas, int px, int py);
 void Target_Free(Target *target);
 void Target_SetPixel(Target *target, int px, int py);
+void Target_ColorEveryOtherPixel(Target *target);
 void Target_Update(Target *target, Mouse *mouse);
 void Target_Draw(Target *target, SDL_Renderer *renderer);
 void Target_RecheckVisible(Target *target);
+
+int Target_ToCenterX(Canvas *canvas, int pixelIndex);
+int Target_ToCenterY(Canvas *canvas, int pixelIndex);
 
 #endif

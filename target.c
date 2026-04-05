@@ -9,14 +9,14 @@ static int Target_ToPixel(Canvas *canvas, int screenCoord) {
     return (screenCoord - canvas->x) / Target_Step(canvas);
 }
 
-static int Target_ToCenterX(Canvas *canvas, int pixelIndex) {
+int Target_ToCenterX(Canvas *canvas, int pixelIndex) {
     int step = Target_Step(canvas);
-    return canvas->x + pixelIndex * step + canvas->pixelSize / 2;
+    return canvas->x + pixelIndex * step + (canvas->gridShow ? 1 : 0) + canvas->pixelSize / 2;
 }
 
-static int Target_ToCenterY(Canvas *canvas, int pixelIndex) {
+int Target_ToCenterY(Canvas *canvas, int pixelIndex) {
     int step = Target_Step(canvas);
-    return canvas->y + pixelIndex * step + canvas->pixelSize / 2;
+    return canvas->y + pixelIndex * step + (canvas->gridShow ? 1 : 0) + canvas->pixelSize / 2;
 }
 
 Target *Target_New(Palette *palette, Canvas *canvas, int px, int py) {
@@ -56,6 +56,19 @@ void Target_RecheckVisible(Target *target) {
         target->py >= 0 && target->py < target->canvas->h;
 }
 
+void Target_ColorEveryOtherPixel(Target *target) {
+    int i, j;
+    if(!target || !target->canvas) return;
+
+    for(j = 0; j < target->canvas->h; j++) {
+        for(i = 0; i < target->canvas->w; i++) {
+            if((i + j) % 2 == 0) {
+                Canvas_DrawPoint(target->canvas, i, j, target->palette->currentColor);
+            }
+        }
+    }
+}
+
 void Target_Update(Target *target, Mouse *mouse) {
     if(!target || !target->canvas || !mouse) return;
 
@@ -63,6 +76,9 @@ void Target_Update(Target *target, Mouse *mouse) {
         int px = Target_ToPixel(target->canvas, mouse->x);
         int py = Target_ToPixel(target->canvas, mouse->y);
         Target_SetPixel(target, px, py);
+        if((px + py) % 2 == 0) {
+            Canvas_DrawPoint(target->canvas, px, py, target->palette->currentColor);
+        }
     }
 }
 
