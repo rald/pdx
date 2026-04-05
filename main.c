@@ -127,12 +127,11 @@ int main(int argc,char *argv[]) {
 
         Mouse_Update(mouse);
 		Palette_Update(palette, mouse);	
-		Canvas_Update(canvas, mouse);	
 		ScrollBar_Update(scrollBarVertical, mouse);
 		ScrollBar_Update(scrollBarHorizontal, mouse);
 		
 		Palette_Draw(palette, renderer);
-		Canvas_Draw(canvas, renderer);
+		Canvas_Draw(canvas, renderer, (SDL_Rect) {0, 0, SCREEN_WIDTH - 16, SCREEN_HEIGHT - 32 - 16} );
 		ScrollBar_Draw(scrollBarVertical,renderer);
 		ScrollBar_Draw(scrollBarHorizontal,renderer);
 		

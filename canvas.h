@@ -1,3 +1,5 @@
+/* canvas.h */
+
 #ifndef CANVAS_H
 #define CANVAS_H
 
@@ -43,8 +45,7 @@ Canvas *Canvas_New(
 );
 
 void Canvas_EventHandle(Canvas *canvas,SDL_Event event);
-void Canvas_Update(Canvas *canvas, Mouse *mouse);
-void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer);
+void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport);
 void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color);
 int Canvas_ReadPoint(Canvas *canvas, int x, int y);
 Canvas *Canvas_LoadCVS(char *filename, Palette *palette);

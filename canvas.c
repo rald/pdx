@@ -1,3 +1,5 @@
+/* canvas.c */
+
 #include "canvas.h"
 
 Canvas *Canvas_New(
@@ -71,77 +73,62 @@ void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
 	}
 }
 
-void Canvas_Update(Canvas *canvas, Mouse *mouse) {
-}
 
-void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer) {
-	int i,j,k,l;
+void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport) {
 
-	SDL_Rect rect;
+	int i,j,k;
+	byte l;
 
-	SDL_Rect clip = { 0, 0, SCREEN_WIDTH - 16, SCREEN_HEIGHT - 32 - 16 };
-	SDL_RenderSetClipRect(renderer, &clip);
+    int px = canvas->pixelSize;
+    int step = canvas->gridShow ? px + 1 : px;
 
-	if(canvas->gridShow) {
-		rect.x = canvas->x;
-		rect.y = canvas->y;
-		rect.w = canvas->w * (canvas->pixelSize + 1) + 1;
-		rect.h = canvas->h * (canvas->pixelSize + 1) + 1;
+    int x0 = (-canvas->x) / step;
+    int y0 = (-canvas->y) / step;
+    int x1 = (-canvas->x + viewport.w) / step + 1;
+    int y1 = (-canvas->y + viewport.h) / step + 1;
 
-		SDL_SetRenderDrawColor(
-			renderer, 
-			canvas->palette->colors[canvas->gridColor].r, 
-			canvas->palette->colors[canvas->gridColor].g, 
-			canvas->palette->colors[canvas->gridColor].b, 
-			255);
+    if(x0 < 0) x0 = 0;
+    if(y0 < 0) y0 = 0;
+    if(x1 > canvas->w) x1 = canvas->w;
+    if(y1 > canvas->h) y1 = canvas->h;
 
-		SDL_RenderFillRect(renderer, &rect);
-	}
+    SDL_RenderSetClipRect(renderer, &viewport);
 
-	for(j = 0; j < canvas->h; j++) {
-		for(i = 0; i < canvas->w; i++) {
+    SDL_Rect rect;
+    for(j = y0; j < y1; j++) {
+        for(i = x0; i < x1; i++) {
+            k = canvas->frame * canvas->w * canvas->h + j * canvas->w + i;
+            l = canvas->pixels[k];
+            if(l == canvas->transparent) continue;
 
-			k = canvas->frame * canvas->w * canvas->h + j * canvas->w + i;
-			l = canvas->pixels[k];
+            rect.x = canvas->x + i * step + (canvas->gridShow ? 1 : 0);
+            rect.y = canvas->y + j * step + (canvas->gridShow ? 1 : 0);
+            rect.w = px;
+            rect.h = px;
 
-			if(l != canvas->transparent) {
-								
-				if(canvas->gridShow) {
-					rect.x = i * (canvas->pixelSize + 1) + canvas->x + 1;
-					rect.y = j * (canvas->pixelSize + 1) + canvas->y + 1;
-					rect.w = canvas->pixelSize;
-					rect.h = canvas->pixelSize;
-				} else {
-					rect.x = i * canvas->pixelSize + canvas->x;
-					rect.y = j * canvas->pixelSize + canvas->y;
-					rect.w = canvas->pixelSize;
-					rect.h = canvas->pixelSize;
-				}
-				
-				if(rect.x>=SCREEN_WIDTH) break;
+            SDL_SetRenderDrawColor(renderer,
+                canvas->palette->colors[l].r,
+                canvas->palette->colors[l].g,
+                canvas->palette->colors[l].b,
+                255);
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
 
-				SDL_SetRenderDrawColor(renderer, canvas->palette->colors[l].r, canvas->palette->colors[l].g, canvas->palette->colors[l].b, 255);
-				SDL_RenderFillRect(renderer, &rect);
-			}
-		}
-		
-		if(rect.y>=SCREEN_HEIGHT) break;
-	}
-
-	SDL_RenderSetClipRect(renderer, NULL);
+    SDL_RenderSetClipRect(renderer, NULL);
 }
 
 void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color) {
-	if(x>=0 && x<canvas->w && y>=0 && y<canvas->h) {
-		canvas->pixels[canvas->frame*canvas->w*canvas->h+canvas->y*canvas->w+canvas->x]=color;
-	}
+    if(x >= 0 && x < canvas->w && y >= 0 && y < canvas->h) {
+        canvas->pixels[canvas->frame * canvas->w * canvas->h + y * canvas->w + x] = color;
+    }
 }
 
 int Canvas_ReadPoint(Canvas *canvas, int x, int y) {
-	if(x>=0 && x<canvas->w && y>=0 && y<canvas->h) {
-		return canvas->pixels[canvas->frame*canvas->w*canvas->h+canvas->y*canvas->w+canvas->x];
-	}
-	return -1;
+    if(x >= 0 && x < canvas->w && y >= 0 && y < canvas->h) {
+        return canvas->pixels[canvas->frame * canvas->w * canvas->h + y * canvas->w + x];
+    }
+    return -1;
 }
 
 Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
