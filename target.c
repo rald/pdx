@@ -1,32 +1,17 @@
+/* file: target.c */
+
 #include <stdlib.h>
 #include "target.h"
 
-static int Target_Step(Canvas *canvas) {
-    return canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
-}
-
-static int Target_ToPixel(Canvas *canvas, int screenCoord) {
-    return (screenCoord - canvas->x) / Target_Step(canvas);
-}
-
-static int Target_ToCenterX(Canvas *canvas, int pixelIndex) {
-    int step = Target_Step(canvas);
-    return canvas->x + pixelIndex * step + canvas->pixelSize / 2;
-}
-
-static int Target_ToCenterY(Canvas *canvas, int pixelIndex) {
-    int step = Target_Step(canvas);
-    return canvas->y + pixelIndex * step + canvas->pixelSize / 2;
-}
-
-Target *Target_New(Palette *palette, Canvas *canvas, int px, int py) {
+Target *Target_New(Palette *palette, Canvas *canvas, int x, int y) {
     Target *target = malloc(sizeof(*target));
+
     if(!target) return NULL;
 
     target->palette = palette;
     target->canvas = canvas;
-    target->px = px;
-    target->py = py;
+    target->x = x;
+    target->y = y;
     target->visible = true;
 
     return target;
@@ -36,53 +21,64 @@ void Target_Free(Target *target) {
     free(target);
 }
 
-void Target_SetPixel(Target *target, int px, int py) {
-    if(!target || !target->canvas) return;
-
-    if(px >= 0 && px < target->canvas->w && py >= 0 && py < target->canvas->h) {
-        target->px = px;
-        target->py = py;
-        target->visible = true;
-    } else {
-        target->visible = false;
-    }
-}
-
-void Target_RecheckVisible(Target *target) {
-    if(!target || !target->canvas) return;
-
-    target->visible =
-        target->px >= 0 && target->px < target->canvas->w &&
-        target->py >= 0 && target->py < target->canvas->h;
-}
 
 void Target_Update(Target *target, Mouse *mouse) {
-    if(!target || !target->canvas || !mouse) return;
-
     if(mouse->state & SDL_BUTTON_RMASK) {
-        int px = Target_ToPixel(target->canvas, mouse->x);
-        int py = Target_ToPixel(target->canvas, mouse->y);
-        Target_SetPixel(target, px, py);
+        int localX = mouse->x - target->canvas->x;
+        int localY = mouse->y - target->canvas->y;
+        int step = target->canvas->gridShow ? target->canvas->pixelSize + 1 : target->canvas->pixelSize;
+
+        if(step <= 0) return;
+
+        target->x = target->canvas->x + (localX / step) * step + (target->canvas->pixelSize / 2);
+        target->y = target->canvas->y + (localY / step) * step + (target->canvas->pixelSize / 2);
     }
 }
 
 void Target_Draw(Target *target, SDL_Renderer *renderer) {
-    if(!target || !target->canvas || !target->visible) return;
+    int i, j;
+    Uint32 pixel;
+    Uint8 r, g, b, a;
 
-    int x = Target_ToCenterX(target->canvas, target->px);
-    int y = Target_ToCenterY(target->canvas, target->py);
+    int w = 4 - -4 + 1, h = 4 - -4 + 1;
+    SDL_Rect area = { target->x - 4, target->y - 4, w, h };
 
-    int k = target->canvas->frame * target->canvas->w * target->canvas->h
-          + target->py * target->canvas->w
-          + target->px;
+    SDL_Window *window = SDL_RenderGetWindow(renderer);
+    SDL_Surface *surface = SDL_GetWindowSurface(window);
+    Uint32 format = SDL_GetWindowPixelFormat(window);
+    int pitch = w * SDL_BYTESPERPIXEL(format);
+    Uint32 *pixels = malloc(pitch * h);
 
-    byte p = target->canvas->pixels[k];
-    SDL_Color c = target->palette->colors[p];
+    if(!pixels) return;
 
-    SDL_SetRenderDrawColor(renderer, 255 - c.r, 255 - c.g, 255 - c.b, 255);
+	SDL_Rect clip = {0,0,640-16,480-32-16};
+	
+	SDL_RenderSetClipRect(renderer,&clip);
 
-    SDL_RenderDrawLine(renderer, x - 4, y, x + 4, y);
-    SDL_RenderDrawLine(renderer, x, y - 4, x, y + 4);
+    if (SDL_RenderReadPixels(renderer, &area, format, pixels, pitch) == 0) {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
+        for(i = -4; i <= 4; i++) {
+            int sx = i + 4;
+            int sy = 4;
+            pixel = pixels[sy * w + sx];
+            SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
+            SDL_SetRenderDrawColor(renderer, 255 - r, 255 - g, 255 - b, a);
+            SDL_RenderDrawPoint(renderer, target->x + i, target->y);
+        }
+
+        for(j = -4; j <= 4; j++) {
+            int sx = 4;
+            int sy = j + 4;
+            pixel = pixels[sy * w + sx];
+            SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
+            SDL_SetRenderDrawColor(renderer, 255 - r, 255 - g, 255 - b, a);
+            SDL_RenderDrawPoint(renderer, target->x, target->y + j);
+        }
+    }
+
+	SDL_RenderSetClipRect(renderer,NULL);
+
+    free(pixels);
 }
-
 

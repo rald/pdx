@@ -132,21 +132,17 @@ int main(int argc,char *argv[]) {
 		SDL_RenderClear(renderer);
 
         Mouse_Update(mouse);
-		Target_Update(target, mouse);
 		Palette_Update(palette, mouse);	
 		ScrollBar_Update(scrollBarVertical, mouse);
 		ScrollBar_Update(scrollBarHorizontal, mouse);
+		Target_Update(target, mouse);
 
 		Canvas_Draw(canvas, renderer, (SDL_Rect) {0, 0, SCREEN_WIDTH - 16, SCREEN_HEIGHT - 32 - 16} );
-		Target_Draw(target, renderer);
-		
 		Palette_Draw(palette, renderer);
-
 		ScrollBar_Draw(scrollBarVertical,renderer);
 		ScrollBar_Draw(scrollBarHorizontal,renderer);
-		Target_RecheckVisible(target);
-		
-		
+		Target_Draw(target, renderer);
+
 	    SDL_RenderPresent(renderer);
 	    
 	    SDL_Delay(10);
