@@ -8,13 +8,14 @@
 
 typedef struct {
     int x, y, w, h;
-    int viewportW, viewportH;
+    int viewPortW, viewPortH;
+    int buttonSize;
     Canvas *canvas;
     ScrollBar *vscroll;
     ScrollBar *hscroll;
 } MyWindow;
 
-MyWindow *MyWindow_New(Palette *palette, Canvas *canvas, int x, int y, int w, int h);
+MyWindow *MyWindow_New(Palette *palette, Canvas *canvas, int x, int y, int w, int h, int boxSize);
 void MyWindow_Update(MyWindow *myWindow, Mouse *mouse);
 void MyWindow_Draw(MyWindow *myWindow, SDL_Renderer *renderer);
 

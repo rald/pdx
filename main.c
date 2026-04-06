@@ -81,7 +81,7 @@ int main(int argc,char *argv[]) {
 	
 	target=Target_New(palette,canvas,0,0);
 
-	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32);
+	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32, 16);
 	
     while(!quit) {
 		

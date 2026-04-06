@@ -3,16 +3,17 @@
 #include <stdlib.h>
 #include "scrollbar.h"
 
-static int ScrollBar_GetViewPortSize(ScrollBarOrientation orientation) {
-	return orientation == SCROLLBAR_ORIENTATION_VERTICAL
-		? 480 - 32 - 16
-		: 640 - 16;
+static int ScrollBar_GetViewPortSize(ScrollBar *scrollBar) {
+	return scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL
+		? scrollBar->viewPortH
+		: scrollBar->viewPortW;
 }
 
-static int ScrollBar_GetTrackArea(ScrollBarOrientation orientation) {
-	return orientation == SCROLLBAR_ORIENTATION_VERTICAL
-		? 480 - 32 - 16 - 16 - 16
-		: 640 - 16 - 16 - 16;
+
+static int ScrollBar_GetTrackArea(ScrollBar *scrollBar) {
+	return scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL
+		? scrollBar->viewPortH - scrollBar->buttonSize * 2
+		: scrollBar->viewPortW - scrollBar->buttonSize * 2;
 }
 
 static int ScrollBar_GetContentSize(ScrollBar *scrollBar) {
@@ -121,8 +122,8 @@ static void ScrollBar_DoDrag(ScrollBar *scrollBar, Mouse *mouse, int trackStart,
 }
 
 static void ScrollBar_Refresh(ScrollBar *scrollBar) {
-	scrollBar->viewPortSize = ScrollBar_GetViewPortSize(scrollBar->orientation);
-	scrollBar->trackArea = ScrollBar_GetTrackArea(scrollBar->orientation);
+	scrollBar->viewPortSize = ScrollBar_GetViewPortSize(scrollBar);
+	scrollBar->trackArea = ScrollBar_GetTrackArea(scrollBar);
 	scrollBar->contentSize = ScrollBar_GetContentSize(scrollBar);
 	ScrollBar_ApplyThumb(scrollBar);
 	ScrollBar_UpdateThumbRect(scrollBar);
@@ -132,6 +133,7 @@ ScrollBar *ScrollBar_New(
 		Palette *palette, Canvas *canvas,
 		ScrollBarOrientation orientation,
 		int x, int y, int w, int h,
+		int viewPortW, int viewPortH,
 		int buttonSize) {
 
 	ScrollBar *scrollBar = malloc(sizeof(*scrollBar));
@@ -142,7 +144,11 @@ ScrollBar *ScrollBar_New(
 	scrollBar->y = y;
 	scrollBar->w = w;
 	scrollBar->h = h;
+	
+	scrollBar->viewPortW = viewPortW;
+	scrollBar->viewPortH = viewPortH;
 	scrollBar->buttonSize = buttonSize;
+		
 	scrollBar->palette = palette;
 	scrollBar->canvas = canvas;
 	scrollBar->scrollPosition = 0;

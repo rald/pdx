@@ -3,49 +3,58 @@
 #include <stdlib.h>
 #include "MyWindow.h"
 
-MyWindow *MyWindow_New(Palette *palette, Canvas *canvas, int x, int y, int w, int h) {
-    MyWindow *mw = malloc(sizeof(*mw));
-    if(!mw) return NULL;
+MyWindow *MyWindow_New(
+		Palette *palette, 
+		Canvas *canvas, 
+		int x, int y, int w, int h, 
+		int buttonSize) {
 
-    mw->x = x;
-    mw->y = y;
-    mw->w = w;
-    mw->h = h;
-    mw->canvas = canvas;
+    MyWindow *myWindow = malloc(sizeof(*myWindow));
+    if(!myWindow) return NULL;
 
-    mw->viewportW = w - 16;
-    mw->viewportH = h - 16;
+    myWindow->x = x;
+    myWindow->y = y;
+    myWindow->w = w;
+    myWindow->h = h;
+    myWindow->canvas = canvas;
 
-    mw->canvas->x = x;
-    mw->canvas->y = y;
+	myWindow->buttonSize = buttonSize;
 
-    mw->vscroll = ScrollBar_New(
+    myWindow->viewPortW = w - buttonSize;
+    myWindow->viewPortH = h - buttonSize;
+
+    myWindow->vscroll = ScrollBar_New(
         palette, canvas,
         SCROLLBAR_ORIENTATION_VERTICAL,
-        x + w - 16, y, 16, mw->viewportH, 
-        16
+        x + w - buttonSize, y, buttonSize, h - buttonSize, 
+        myWindow->viewPortW, myWindow->viewPortH,
+        buttonSize
     );
 
-    mw->hscroll = ScrollBar_New(
+    myWindow->hscroll = ScrollBar_New(
         palette, canvas,
         SCROLLBAR_ORIENTATION_HORIZONTAL,
-        x, y + h - 16, mw->viewportW, 16, 
-        16
+        x, y + h - buttonSize, w - buttonSize, buttonSize, 
+        myWindow->viewPortW, myWindow->viewPortH,
+        buttonSize
     );
 
-    return mw;
+    myWindow->canvas->x = x;
+    myWindow->canvas->y = y;
+
+    return myWindow;
 }
 
-void MyWindow_Update(MyWindow *mw, Mouse *mouse) {
-    ScrollBar_Update(mw->vscroll, mouse);
-    ScrollBar_Update(mw->hscroll, mouse);
+void MyWindow_Update(MyWindow *myWindow, Mouse *mouse) {
+    ScrollBar_Update(myWindow->vscroll, mouse);
+    ScrollBar_Update(myWindow->hscroll, mouse);
 }
 
-void MyWindow_Draw(MyWindow *mw, SDL_Renderer *renderer) {
-    SDL_Rect viewport = { mw->x, mw->y, mw->viewportW, mw->viewportH };
-    Canvas_Draw(mw->canvas, renderer, viewport);
-    ScrollBar_Draw(mw->vscroll, renderer);
-    ScrollBar_Draw(mw->hscroll, renderer);
+void MyWindow_Draw(MyWindow *myWindow, SDL_Renderer *renderer) {
+    SDL_Rect viewPort = { myWindow->x, myWindow->y, myWindow->viewPortW, myWindow->viewPortH };
+    Canvas_Draw(myWindow->canvas, renderer, viewPort);
+    ScrollBar_Draw(myWindow->vscroll, renderer);
+    ScrollBar_Draw(myWindow->hscroll, renderer);
 }
 
 
