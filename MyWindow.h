@@ -16,6 +16,8 @@ typedef struct {
 } MyWindow;
 
 MyWindow *MyWindow_New(Palette *palette, Canvas *canvas, int x, int y, int w, int h, int boxSize);
+void MyWindow_Free(MyWindow *myWindow);
+
 void MyWindow_Update(MyWindow *myWindow, Mouse *mouse);
 void MyWindow_Draw(MyWindow *myWindow, SDL_Renderer *renderer);
 

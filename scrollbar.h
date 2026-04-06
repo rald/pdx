@@ -47,6 +47,8 @@ ScrollBar *ScrollBar_New(
 		int viewPortH, int viewPortW,
 		int buttonSize);
 
+void ScrollBar_Free(ScrollBar *scrollBar);
+
 void ScrollBar_Draw(ScrollBar *scrollbar, SDL_Renderer *renderer);
 void ScrollBar_Update(ScrollBar *scrollbar, Mouse *mouse);
 

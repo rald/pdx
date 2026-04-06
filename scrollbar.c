@@ -140,6 +140,12 @@ ScrollBar *ScrollBar_New(
     return s;
 }
 
+void ScrollBar_Free(ScrollBar *scrollBar) {
+	Button_Free(scrollBar->buttonFirst);
+	Button_Free(scrollBar->buttonSecond);
+	free(scrollBar);
+}
+
 void ScrollBar_Update(ScrollBar *s, Mouse *mouse) {
     ScrollBar_Refresh(s);
 

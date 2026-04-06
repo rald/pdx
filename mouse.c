@@ -15,14 +15,18 @@ Mouse *Mouse_New(char *filename, int x, int y, SDL_Color transparent) {
 
 		surface = SDL_LoadBMP(filename);
 		if(surface) {
-			SDL_SetColorKey(surface, SDL_TRUE,
-				SDL_MapRGB(surface->format, transparent.r, transparent.g, transparent.b));
+			SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, transparent.r, transparent.g, transparent.b));
 			mouse->cursor = SDL_CreateColorCursor(surface, 0, 0);
 			SDL_FreeSurface(surface);
 		}
 	}
 
 	return mouse;
+}
+
+void Mouse_Free(Mouse *mouse) {
+	SDL_FreeCursor(mouse->cursor);
+	free(mouse);
 }
 
 void Mouse_EventHandle(Mouse *mouse, SDL_Event event) {

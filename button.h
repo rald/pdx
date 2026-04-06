@@ -21,6 +21,7 @@ typedef struct {
 } Button;
 
 Button *Button_New(int x, int y, int w, int h, Palette *palette);
+void Button_Free(Button *button);
 void Button_Draw(Button *button, SDL_Renderer *renderer);
 bool Button_Update(Button *button, Mouse *mouse);
 

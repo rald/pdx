@@ -38,10 +38,12 @@ Canvas *Canvas_New(
     int frame
 );
 
+
+
 Canvas *Canvas_LoadCVS(char *filename, Palette *palette);
 
-void Canvas_EventHandle(Canvas *canvas, SDL_Event event);
 
+void Canvas_EventHandle(Canvas *canvas, SDL_Event event);
 void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport);
 
 void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color);

@@ -45,6 +45,12 @@ MyWindow *MyWindow_New(
     return myWindow;
 }
 
+void MyWindow_Free(MyWindow *myWindow) {
+	ScrollBar_Free(myWindow->vscroll);
+	ScrollBar_Free(myWindow->hscroll);
+	free(myWindow);
+}
+
 void MyWindow_Update(MyWindow *myWindow, Mouse *mouse) {
     ScrollBar_Update(myWindow->vscroll, mouse);
     ScrollBar_Update(myWindow->hscroll, mouse);

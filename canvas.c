@@ -59,6 +59,11 @@ Canvas *Canvas_New(
     return canvas;
 }
 
+void Canvas_Free(Canvas *canvas) {
+	free(canvas->pixels);
+	free(canvas);
+}
+
 void Canvas_EventHandle(Canvas *canvas, SDL_Event event) {
     static bool isDrawing = false;
     static int dx = 0, dy = 0;

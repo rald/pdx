@@ -142,6 +142,12 @@ int main(int argc,char *argv[]) {
 	    SDL_Delay(10);
     }
 
+	MyWindow_Free(myWindow);
+	Palette_Free(palette);
+	Canvas_Free(canvas);
+	Target_Free(target);
+	Mouse_Free(mouse);
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 

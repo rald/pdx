@@ -15,6 +15,10 @@ Button *Button_New(int x, int y, int w, int h, Palette *palette) {
 	return button;
 }
 
+void Button_Free(Button *button) {
+	free(button);
+}
+
 void Button_Draw(Button *button, SDL_Renderer *renderer) {
 	SDL_Rect rect = {button->x, button->y, button->w, button->h};
 	switch(button->state) {

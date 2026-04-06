@@ -4,17 +4,24 @@
 
 Palette *Palette_New(SDL_Color *colors, size_t ncolors, int x, int y, int w, int h, byte currentColor, size_t boxSize) {
 	Palette *palette = malloc(sizeof(*palette));
-	if(palette) {
-		palette->colors = colors;
-		palette->ncolors = ncolors;
-		palette->x = x;
-		palette->y = y;
-		palette->w = w;
-		palette->h = h;
-		palette->currentColor = currentColor;
-		palette->boxSize = boxSize;
-	}
+
+	if(!palette) return NULL;
+
+	palette->colors = colors;
+	palette->ncolors = ncolors;
+	palette->x = x;
+	palette->y = y;
+	palette->w = w;
+	palette->h = h;
+	palette->currentColor = currentColor;
+	palette->boxSize = boxSize;
+	palette->scrubbing = false;
+
 	return palette;
+}
+
+void Palette_Free(Palette *palette) {
+	free(palette);
 }
 
 void Palette_Update(Palette *palette, Mouse *mouse) {

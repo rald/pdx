@@ -18,6 +18,7 @@ typedef struct {
 } Palette;
 
 Palette *Palette_New(SDL_Color *colors, size_t ncolors, int x, int y, int w, int h, byte currentColor, size_t size);
+void Palette_Free(Palette *palette);
 
 void Palette_EventHandle(Palette *palette,SDL_Event event);
 void Palette_Update(Palette *palette, Mouse *mouse);

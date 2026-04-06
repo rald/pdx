@@ -12,6 +12,8 @@ typedef struct {
 } Mouse;
 
 Mouse *Mouse_New(char *filename, int x, int y, SDL_Color transparent);
+void Mouse_Free(Mouse *mouse);
+
 void Mouse_EventHandle(Mouse *mouse, SDL_Event event);
 void Mouse_Update(Mouse *mouse);
 
