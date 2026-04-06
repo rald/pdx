@@ -66,9 +66,13 @@ void Canvas_EventHandle(Canvas *canvas, SDL_Event event) {
 
     switch(event.type) {
     case SDL_KEYDOWN:
-        if(event.key.keysym.sym == SDLK_g) canvas->gridShow = !canvas->gridShow;
-        break;
-
+    	switch(event.key.keysym.sym) {
+			case SDLK_g:
+			canvas->gridShow = !canvas->gridShow;
+			break;
+			default: break;			
+		}
+		break;
     case SDL_MOUSEBUTTONDOWN:
         if(!isDrawing && event.button.button == SDL_BUTTON_LEFT) {
             if(canvas->palette && inrect(event.button.x, event.button.y,
@@ -100,18 +104,19 @@ void Canvas_EventHandle(Canvas *canvas, SDL_Event event) {
             }
         }
         break;
-
-    case SDL_MOUSEWHEEL:
-        isDrawing = false;
-        if(event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
-            if(event.wheel.y > 0) event.wheel.y *= -1;
-        }
-        if(canvas->pixelSize > 1 && event.wheel.y < 0) canvas->pixelSize--;
-        if(canvas->pixelSize < 32 && event.wheel.y > 0) canvas->pixelSize++;
-        break;
-
-    default:
-        break;
+	case SDL_MOUSEWHEEL:
+		if(event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+		    if(event.wheel.y > 0) event.wheel.y *= -1;
+		}
+		if(canvas->pixelSize > 1 && event.wheel.y < 0) { 
+			canvas->pixelSize--; 
+		} 
+		if(canvas->pixelSize < 32 && event.wheel.y > 0) { 
+			canvas->pixelSize++;
+		}				
+		break;                
+    default: 
+    	break;
     }
 }
 
