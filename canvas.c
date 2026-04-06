@@ -2,7 +2,80 @@
 
 #include "canvas.h"
 
-static void Canvas_MouseToCell(Canvas *canvas, int mx, int my, int *cx, int *cy) {
+typedef struct {
+  int x,y;
+} Point;
+
+#define STACK_MAX 1024
+Point stack[STACK_MAX];
+int sp=STACK_MAX;
+
+static void push(int x,int y) {
+  sp--;
+  stack[sp].x=x;
+  stack[sp].y=y;
+}
+
+static void pop(int *x,int *y) {
+  *x=stack[sp].x;
+  *y=stack[sp].y;
+  sp++;
+}
+
+static bool isStackEmpty() {
+  return sp==STACK_MAX;
+}
+
+static void scanForSeeds(Canvas *canvas, int lx, int rx, int y, byte old_color, byte new_color) {  
+  bool added = false;
+  int x;
+  
+  if (y < 0 || y >= SCREEN_HEIGHT) return;
+  
+  for (x = lx; x <= rx; x++) {
+    if (Canvas_ReadPoint(canvas, x, y) == old_color) {
+      if (!added) {
+        push(x, y);
+        added = true;
+      }
+    } else {
+      added = false;
+    }
+  }
+}
+
+void Canvas_FloodFill(Canvas *canvas, int x, int y, byte new_color, byte old_color) {
+  int i;
+  int lx,rx;
+  if (old_color == new_color) return;
+  
+  push(x, y);
+  
+  while (!isStackEmpty()) {
+    pop(&x, &y);
+  
+    lx = x;
+    while (lx > 0 && Canvas_ReadPoint(canvas, lx - 1, y) == old_color) {
+      Canvas_DrawPoint(canvas, lx - 1, y, new_color);
+      lx--;
+    }
+    
+    rx = x;
+    while (rx < SCREEN_WIDTH - 1 && Canvas_ReadPoint(canvas, rx + 1, y) == old_color) {
+      Canvas_DrawPoint(canvas, rx + 1, y, new_color);
+      rx++;
+    }
+    
+    for (i = lx; i <= rx; i++) {
+      Canvas_DrawPoint(canvas, i, y, new_color);
+    }
+    
+    scanForSeeds(canvas, lx, rx, y + 1, old_color, new_color);
+    scanForSeeds(canvas, lx, rx, y - 1, old_color, new_color);
+  }
+}
+
+void Canvas_MouseToCell(Canvas *canvas, int mx, int my, int *cx, int *cy) {
     int step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
     int localX = mx - canvas->x;
     int localY = my - canvas->y;
@@ -37,6 +110,7 @@ Canvas *Canvas_New(
     if(!canvas) return NULL;
 
     canvas->palette = palette;
+    
     canvas->w = w;
     canvas->h = h;
     canvas->nframe = nframe;
@@ -62,67 +136,6 @@ Canvas *Canvas_New(
 void Canvas_Free(Canvas *canvas) {
 	free(canvas->pixels);
 	free(canvas);
-}
-
-void Canvas_EventHandle(Canvas *canvas, SDL_Event event) {
-    static bool isDrawing = false;
-    static int dx = 0, dy = 0;
-    int cx = 0, cy = 0;
-
-    switch(event.type) {
-    case SDL_KEYDOWN:
-    	switch(event.key.keysym.sym) {
-			case SDLK_g:
-			canvas->gridShow = !canvas->gridShow;
-			break;
-			default: break;			
-		}
-		break;
-    case SDL_MOUSEBUTTONDOWN:
-        if(!isDrawing && event.button.button == SDL_BUTTON_LEFT) {
-            if(canvas->palette && inrect(event.button.x, event.button.y,
-                                         canvas->palette->x, canvas->palette->y,
-                                         canvas->palette->w, canvas->palette->h)) {
-                break;
-            }
-
-            Canvas_MouseToCell(canvas, event.button.x, event.button.y, &cx, &cy);
-            if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
-                isDrawing = true;
-                dx = cx;
-                dy = cy;
-            }
-        }
-        break;
-
-    case SDL_MOUSEBUTTONUP:
-        isDrawing = false;
-        break;
-
-    case SDL_MOUSEMOTION:
-        if(isDrawing) {
-            Canvas_MouseToCell(canvas, event.motion.x, event.motion.y, &cx, &cy);
-            if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
-                Canvas_DrawLine(canvas, dx, dy, cx, cy, canvas->palette->currentColor);
-                dx = cx;
-                dy = cy;
-            }
-        }
-        break;
-	case SDL_MOUSEWHEEL:
-		if(event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
-		    if(event.wheel.y > 0) event.wheel.y *= -1;
-		}
-		if(canvas->pixelSize > 1 && event.wheel.y < 0) { 
-			canvas->pixelSize--; 
-		} 
-		if(canvas->pixelSize < 32 && event.wheel.y > 0) { 
-			canvas->pixelSize++;
-		}				
-		break;                
-    default: 
-    	break;
-    }
 }
 
 void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport) {

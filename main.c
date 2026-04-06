@@ -56,6 +56,13 @@ Target *target = NULL;
 
 MyWindow *myWindow = NULL;
 
+bool isDrawing = false;
+int dx = 0, dy = 0;
+int cx = 0, cy = 0;
+byte oldColor,newColor;
+
+
+
 int main(int argc,char *argv[]) {
 
 	SDL_Init(SDL_INIT_VIDEO);
@@ -79,7 +86,7 @@ int main(int argc,char *argv[]) {
 
 	canvas=Canvas_LoadCVS("cvs/dog.cvs", palette);
 	
-	target=Target_New(palette,canvas,0,0);
+	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
 
 	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32, 16);
 	
@@ -104,18 +111,64 @@ int main(int argc,char *argv[]) {
                 switch(event.key.keysym.sym) {
                 case SDLK_ESCAPE:
                     quit = true;
-                    break;
-                default: break;
-                }
-                break;
-            default: break;
+                    break;                    
+				case SDLK_g:
+					canvas->gridShow = !canvas->gridShow;
+					break;
+				case SDLK_f:
+					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
+					oldColor = canvas->pixels[cy * canvas->w + cx];
+					newColor = palette->currentColor;
+					Canvas_FloodFill(canvas, cx, cy, newColor, oldColor);
+					break;
+				default: 
+					break;			
+				}
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				if(overPalette || palette->scrubbing || overScrollBar || draggingScrollBar) continue;
+
+				if(!isDrawing && event.button.button == SDL_BUTTON_LEFT) {
+					Canvas_MouseToCell(canvas, event.button.x, event.button.y, &cx, &cy);
+					if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
+						isDrawing = true;
+						dx = cx;
+						dy = cy;
+					}
+				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+				isDrawing = false;
+				break;
+			case SDL_MOUSEMOTION:
+				if(overPalette || palette->scrubbing || overScrollBar || draggingScrollBar) continue;
+				if(isDrawing) {
+					Canvas_MouseToCell(canvas, event.motion.x, event.motion.y, &cx, &cy);
+					if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
+						Canvas_DrawLine(canvas, dx, dy, cx, cy, palette->currentColor);
+						dx = cx;
+						dy = cy;
+					}
+				}
+				break;
+			case SDL_MOUSEWHEEL:
+				if(overPalette || palette->scrubbing || overScrollBar || draggingScrollBar) continue;
+				if(event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+					if(event.wheel.y > 0) event.wheel.y *= -1;
+				}
+				if(canvas->pixelSize > 1 && event.wheel.y < 0) { 
+					canvas->pixelSize--; 
+				} 
+				if(canvas->pixelSize < 32 && event.wheel.y > 0) { 
+					canvas->pixelSize++;
+				}				
+				break;                
+	        default: 
+	        	break;
             }
             
             Mouse_EventHandle(mouse,event);
 
-			if(!palette->scrubbing && !overPalette && !overScrollBar && !draggingScrollBar) {
-				Canvas_EventHandle(canvas, event);
-			}
         }
         	
 		SDL_SetRenderDrawColor(renderer, palette->colors[0].r, palette->colors[0].g, palette->colors[0].b, 255);

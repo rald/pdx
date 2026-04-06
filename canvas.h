@@ -38,17 +38,19 @@ Canvas *Canvas_New(
     int frame
 );
 
-
+void Canvas_Free(Canvas *canvas);
 
 Canvas *Canvas_LoadCVS(char *filename, Palette *palette);
 
-
-void Canvas_EventHandle(Canvas *canvas, SDL_Event event);
 void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport);
 
 void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color);
 int Canvas_ReadPoint(Canvas *canvas, int x, int y);
 void Canvas_DrawLine(Canvas *canvas, int x0, int y0, int x1, int y1, byte color);
+
+void Canvas_MouseToCell(Canvas *canvas, int mx, int my, int *cx, int *cy);
+
+void Canvas_FloodFill(Canvas *canvas, int x, int y, byte new_color, byte old_color);
 
 #endif
 
