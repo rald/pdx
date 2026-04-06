@@ -22,13 +22,15 @@ MyWindow *MyWindow_New(Palette *palette, Canvas *canvas, int x, int y, int w, in
     mw->vscroll = ScrollBar_New(
         palette, canvas,
         SCROLLBAR_ORIENTATION_VERTICAL,
-        x + w - 16, y, 16, mw->viewportH
+        x + w - 16, y, 16, mw->viewportH, 
+        16
     );
 
     mw->hscroll = ScrollBar_New(
         palette, canvas,
         SCROLLBAR_ORIENTATION_HORIZONTAL,
-        x, y + h - 16, mw->viewportW, 16
+        x, y + h - 16, mw->viewportW, 16, 
+        16
     );
 
     return mw;

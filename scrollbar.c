@@ -131,7 +131,8 @@ static void ScrollBar_Refresh(ScrollBar *scrollBar) {
 ScrollBar *ScrollBar_New(
 		Palette *palette, Canvas *canvas,
 		ScrollBarOrientation orientation,
-		int x, int y, int w, int h) {
+		int x, int y, int w, int h,
+		int buttonSize) {
 
 	ScrollBar *scrollBar = malloc(sizeof(*scrollBar));
 	if(!scrollBar) return NULL;
@@ -141,6 +142,7 @@ ScrollBar *ScrollBar_New(
 	scrollBar->y = y;
 	scrollBar->w = w;
 	scrollBar->h = h;
+	scrollBar->buttonSize = buttonSize;
 	scrollBar->palette = palette;
 	scrollBar->canvas = canvas;
 	scrollBar->scrollPosition = 0;
@@ -155,13 +157,13 @@ ScrollBar *ScrollBar_New(
 
 	switch(orientation) {
 	case SCROLLBAR_ORIENTATION_VERTICAL:
-		scrollBar->buttonFirst = Button_New(x, y, w, 16, palette);
-		scrollBar->buttonSecond = Button_New(x, y + h - 16, w, 16, palette);
+		scrollBar->buttonFirst = Button_New(x, y, w, buttonSize, palette);
+		scrollBar->buttonSecond = Button_New(x, y + h - buttonSize, w, buttonSize, palette);
 		break;
 
 	case SCROLLBAR_ORIENTATION_HORIZONTAL:
-		scrollBar->buttonFirst = Button_New(x, y, 16, h, palette);
-		scrollBar->buttonSecond = Button_New(x + w - 16, y, 16, h, palette);
+		scrollBar->buttonFirst = Button_New(x, y, buttonSize, h, palette);
+		scrollBar->buttonSecond = Button_New(x + w - buttonSize, y, buttonSize, h, palette);
 		break;
 
 	default:
@@ -251,17 +253,9 @@ void ScrollBar_Update(ScrollBar *scrollBar, Mouse *mouse) {
 }
 
 void ScrollBar_Draw(ScrollBar *scrollBar, SDL_Renderer *renderer) {
+
 	SDL_Rect clip = { scrollBar->x, scrollBar->y, scrollBar->w, scrollBar->h };
 	SDL_RenderSetClipRect(renderer, &clip);
-
-	SDL_SetRenderDrawColor(renderer,
-		scrollBar->palette->colors[12].r,
-		scrollBar->palette->colors[12].g,
-		scrollBar->palette->colors[12].b,
-		255
-	);
-
-	SDL_RenderDrawRect(renderer, &clip);
 
 	Button_Draw(scrollBar->buttonFirst, renderer);
 	Button_Draw(scrollBar->buttonSecond, renderer);
@@ -274,6 +268,15 @@ void ScrollBar_Draw(ScrollBar *scrollBar, SDL_Renderer *renderer) {
 	);
 
 	SDL_RenderFillRect(renderer, &scrollBar->rectThumb);
+
+	SDL_SetRenderDrawColor(renderer,
+		scrollBar->palette->colors[12].r,
+		scrollBar->palette->colors[12].g,
+		scrollBar->palette->colors[12].b,
+		255
+	);
+
+	SDL_RenderDrawRect(renderer, &clip);
 
 	SDL_RenderSetClipRect(renderer, NULL);
 }

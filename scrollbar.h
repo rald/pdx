@@ -19,6 +19,7 @@ typedef enum {
 typedef struct {
 	ScrollBarOrientation orientation;
 	int x,y,w,h;
+	int buttonSize;
 	Palette *palette;
 	Canvas *canvas;
 
@@ -40,7 +41,8 @@ typedef struct {
 ScrollBar *ScrollBar_New(
 		Palette *palette, Canvas *canvas,
 		ScrollBarOrientation orientation,
-		int x, int y, int w, int h);
+		int x, int y, int w, int h,
+		int buttonSize);
 
 void ScrollBar_Draw(ScrollBar *scrollbar, SDL_Renderer *renderer);
 void ScrollBar_Update(ScrollBar *scrollbar, Mouse *mouse);
