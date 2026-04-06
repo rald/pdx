@@ -2,6 +2,21 @@
 
 #include "canvas.h"
 
+static void Canvas_MouseToCell(Canvas *canvas, int mx, int my, int *cx, int *cy) {
+    int step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
+    int localX = mx - canvas->x;
+    int localY = my - canvas->y;
+
+    if(step <= 0) {
+        *cx = -1;
+        *cy = -1;
+        return;
+    }
+
+    *cx = localX / step;
+    *cy = localY / step;
+}
+
 Canvas *Canvas_New(
     Palette *palette,
     int x, int y, int w, int h,
@@ -85,6 +100,11 @@ Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 }
 
 void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
+
+	static bool isDrawing = false;
+	static int dx=0, dy=0;
+	int cx=0, cy=0;
+
 	switch(event.type) {
 	case SDL_KEYDOWN:
 		switch(event.key.keysym.sym) {
@@ -92,6 +112,31 @@ void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
 			canvas->gridShow = !canvas->gridShow;
 			break;	
 		default: break;
+		}
+		break;
+	case SDL_MOUSEBUTTONDOWN:
+		if(!isDrawing) {
+			if (event.button.button == SDL_BUTTON_LEFT) {
+				Canvas_MouseToCell(canvas, event.button.x, event.button.y, &cx, &cy);
+				if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
+					isDrawing=true;
+					dx=cx;
+					dy=cy;
+				}	
+			}	
+		}
+		break;
+	case SDL_MOUSEBUTTONUP:
+		isDrawing = false;
+		break;
+	case SDL_MOUSEMOTION:
+		if(isDrawing) {
+			Canvas_MouseToCell(canvas, event.motion.x, event.motion.y, &cx, &cy);
+			if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
+				Canvas_DrawLine(canvas, dx, dy, cx, cy, canvas->palette->currentColor);
+				dx=cx;
+				dy=cy;
+			}	
 		}
 		break;
 	case SDL_MOUSEWHEEL:
@@ -173,4 +218,28 @@ int Canvas_ReadPoint(Canvas *canvas, int x, int y) {
     }
     return -1;
 }
+
+void Canvas_DrawLine(Canvas *canvas, int x0, int y0, int x1, int y1, byte color) {
+    int dx = abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy;
+    int e2;
+
+    while (true) {
+        Canvas_DrawPoint(canvas, x0, y0, color);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) {
+            err += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
 

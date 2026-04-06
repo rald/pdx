@@ -46,6 +46,7 @@ void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport);
 
 void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color);
 int Canvas_ReadPoint(Canvas *canvas, int x, int y);
+void Canvas_DrawLine(Canvas *canvas, int x0, int y0, int x1, int y1, byte color);
 
 #endif
 

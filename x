@@ -130,6 +130,21 @@ bool Button_Update(Button *button, Mouse *mouse) {
 
 #include "canvas.h"
 
+static void Canvas_MouseToCell(Canvas *canvas, int mx, int my, int *cx, int *cy) {
+    int step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
+    int localX = mx - canvas->x;
+    int localY = my - canvas->y;
+
+    if(step <= 0) {
+        *cx = -1;
+        *cy = -1;
+        return;
+    }
+
+    *cx = localX / step;
+    *cy = localY / step;
+}
+
 Canvas *Canvas_New(
     Palette *palette,
     int x, int y, int w, int h,
@@ -213,6 +228,11 @@ Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 }
 
 void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
+
+	static bool isDrawing=false;
+	int dx, dy;
+	int cx, cy;
+
 	switch(event.type) {
 	case SDL_KEYDOWN:
 		switch(event.key.keysym.sym) {
@@ -220,6 +240,31 @@ void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
 			canvas->gridShow = !canvas->gridShow;
 			break;	
 		default: break;
+		}
+		break;
+	case SDL_MOUSEBUTTONDOWN:
+		if (event.button.button == SDL_BUTTON_LEFT) {
+			if(!isDrawing) {
+				Canvas_MouseToCell(canvas, event.button.x, event.button.y, &cx, &cy);
+				if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
+					isDrawing=true;
+					dx=cx;
+					dy=cy;
+				}	
+			}	
+		}
+		break;
+	case SDL_MOUSEBUTTONUP:
+		isDrawing = false;
+		break;
+	case SDL_MOUSEMOTION:
+		if(isDrawing) {
+			Canvas_MouseToCell(canvas, event.motion.x, event.motion.y, &cx, &cy);
+			if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
+				Canvas_DrawLine(canvas, dx, dy, cx, cy, canvas->palette->currentColor);
+				dx=cx;
+				dy=cy;
+			}	
 		}
 		break;
 	case SDL_MOUSEWHEEL:
@@ -302,6 +347,29 @@ int Canvas_ReadPoint(Canvas *canvas, int x, int y) {
     return -1;
 }
 
+void Canvas_DrawLine(Canvas *canvas, int x0, int y0, int x1, int y1, byte color) {
+    int dx = abs(x1 - x0);
+    int dy = -abs(y1 - y0);
+    int sx = x0 < x1 ? 1 : -1;
+    int sy = y0 < y1 ? 1 : -1;
+    int e1 = dx + dy;
+    int e2;
+
+    while (true) {
+    	Canvas_DrawPoint(canvas, x0, y0, color);
+        if (x0 == x1 && y0 == y1) break;
+        
+        e2 = 2 * e1;
+        if (e2 >= dy) {
+            e1 += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx) {
+            e1 += dx;
+            y0 += sy;
+        }
+    }
+}
 /* file: main.c */
 
 #include <SDL2/SDL.h>
@@ -849,16 +917,26 @@ void Target_Free(Target *target) {
 
 void Target_Update(Target *target, Mouse *mouse) {
     if(mouse->state & SDL_BUTTON_RMASK) {
-        int localX = mouse->x - target->canvas->x;
-        int localY = mouse->y - target->canvas->y;
         int step = target->canvas->gridShow ? target->canvas->pixelSize + 1 : target->canvas->pixelSize;
+        int localX, localY;
+        int cellX, cellY;
 
         if(step <= 0) return;
 
-        target->x = target->canvas->x + (localX / step) * step + (target->canvas->pixelSize / 2);
-        target->y = target->canvas->y + (localY / step) * step + (target->canvas->pixelSize / 2);
+        localX = mouse->x - target->canvas->x;
+        localY = mouse->y - target->canvas->y;
+
+        cellX = localX / step;
+        cellY = localY / step;
+
+        if(localX < 0) cellX--;
+        if(localY < 0) cellY--;
+
+        target->x = target->canvas->x + cellX * step + (target->canvas->pixelSize / 2);
+        target->y = target->canvas->y + cellY * step + (target->canvas->pixelSize / 2);
     }
 }
+
 
 void Target_Draw(Target *target, SDL_Renderer *renderer) {
     int i, j;
@@ -1017,6 +1095,7 @@ void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport);
 
 void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color);
 int Canvas_ReadPoint(Canvas *canvas, int x, int y);
+void Canvas_DrawLine(Canvas *canvas, int x0, int y0, int x1, int y1, byte color);
 
 #endif
 
