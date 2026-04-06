@@ -17,18 +17,20 @@ Palette *Palette_New(SDL_Color *colors, size_t ncolors, int x, int y, int w, int
 	return palette;
 }
 
-void Palette_EventHandle(Palette *palette, SDL_Event event) {
-}
-
 void Palette_Update(Palette *palette, Mouse *mouse) {
-	if(mouse->state & SDL_BUTTON_LMASK) {
-		if(inrect(mouse->x,mouse->y,palette->x,palette->y,palette->w,palette->h)) {
-			byte i=(mouse->x - palette->x) / palette->boxSize;
-			if(i>=0 && i<=palette->ncolors) {
-				palette->currentColor=i;
-			}
-		}
-	}
+    bool overPalette = inrect(mouse->x, mouse->y, palette->x, palette->y, palette->w, palette->h);
+
+    if(mouse->state & SDL_BUTTON_LMASK) {
+        if(overPalette || palette->scrubbing) {
+            palette->scrubbing = true;
+            int i = (mouse->x - palette->x) / palette->boxSize;
+            if(i >= 0 && i < (int)palette->ncolors) {
+                palette->currentColor = (byte)i;
+            }
+        }
+    } else {
+        palette->scrubbing = false;
+    }
 }
 
 void Palette_Draw(Palette *palette, SDL_Renderer *renderer) {

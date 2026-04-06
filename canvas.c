@@ -116,16 +116,20 @@ void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
 		break;
 	case SDL_MOUSEBUTTONDOWN:
 		if(!isDrawing) {
-			if (event.button.button == SDL_BUTTON_LEFT) {
-				Canvas_MouseToCell(canvas, event.button.x, event.button.y, &cx, &cy);
-				if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
-					isDrawing=true;
-					dx=cx;
-					dy=cy;
-				}	
-			}	
+		    if (event.button.button == SDL_BUTTON_LEFT) {
+		        if(canvas->palette && inrect(event.button.x, event.button.y, canvas->palette->x, canvas->palette->y, canvas->palette->w, canvas->palette->h)) {
+		            break;
+		        }
+
+		        Canvas_MouseToCell(canvas, event.button.x, event.button.y, &cx, &cy);
+		        if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
+		            isDrawing = true;
+		            dx = cx;
+		            dy = cy;
+		        }
+		    }
 		}
-		break;
+    break;
 	case SDL_MOUSEBUTTONUP:
 		isDrawing = false;
 		break;
@@ -142,6 +146,9 @@ void Canvas_EventHandle(Canvas *canvas,SDL_Event event) {
 	case SDL_MOUSEWHEEL:
 		int xScroll = event.wheel.x; 
 		int yScroll = event.wheel.y; 
+		
+		isDrawing=false;
+		
 		if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
 			xScroll *= -1;
 			yScroll *= -1;

@@ -9,11 +9,12 @@
 #include "mouse.h"
 
 typedef struct {
-	int x,y,w,h;
-	SDL_Color *colors;
-	size_t ncolors;
-	byte currentColor;
-	size_t boxSize;
+    int x,y,w,h;
+    SDL_Color *colors;
+    size_t ncolors;
+    byte currentColor;
+    size_t boxSize;
+    bool scrubbing;
 } Palette;
 
 Palette *Palette_New(SDL_Color *colors, size_t ncolors, int x, int y, int w, int h, byte currentColor, size_t size);

@@ -70,7 +70,7 @@ int main(int argc,char *argv[]) {
                SDL_RENDERER_TARGETTEXTURE);
                
                
-	palette = Palette_New(colors, ncolors, 0, SCREEN_HEIGHT - 32, 32 * ncolors, 32, 12, 32);
+	palette = Palette_New(colors, ncolors, 0, SCREEN_HEIGHT - 32, 32 * ncolors, 32, 0, 32);
 
 	mouse = Mouse_New("images/mouse.bmp", SCREEN_WIDTH/2, SCREEN_HEIGHT/2, colors[15]);
 	SDL_SetCursor(mouse->cursor);
@@ -84,6 +84,16 @@ int main(int argc,char *argv[]) {
 	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32);
 	
     while(!quit) {
+		
+		bool overPalette = inrect(mouse->x, mouse->y, palette->x, palette->y, palette->w, palette->h);
+
+		bool overScrollBar =
+			inrect(mouse->x, mouse->y, myWindow->vscroll->x, myWindow->vscroll->y, myWindow->vscroll->w, myWindow->vscroll->h) ||
+			inrect(mouse->x, mouse->y, myWindow->hscroll->x, myWindow->hscroll->y, myWindow->hscroll->w, myWindow->hscroll->h);
+
+		bool draggingScrollBar =
+			myWindow->vscroll->dragging ||
+			myWindow->hscroll->dragging;
 
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
@@ -102,17 +112,25 @@ int main(int argc,char *argv[]) {
             }
             
             Mouse_EventHandle(mouse,event);
-            Canvas_EventHandle(canvas,event);
-            Palette_EventHandle(palette,event);
+
+			if(!palette->scrubbing && !overPalette && !overScrollBar && !draggingScrollBar) {
+				Canvas_EventHandle(canvas, event);
+			}
         }
-        
-	
+        	
 		SDL_SetRenderDrawColor(renderer, palette->colors[0].r, palette->colors[0].g, palette->colors[0].b, 255);
 		SDL_RenderClear(renderer);
 
         Mouse_Update(mouse);
-		MyWindow_Update(myWindow, mouse);
-		Palette_Update(palette, mouse);	
+		
+		if(!palette->scrubbing && !overPalette) {
+			MyWindow_Update(myWindow, mouse);
+		}
+
+		if(!overScrollBar && !draggingScrollBar) {
+			Palette_Update(palette, mouse);
+		}
+
 		Target_Update(target, mouse);
 		
 		MyWindow_Draw(myWindow, renderer);
