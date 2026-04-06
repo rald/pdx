@@ -48,6 +48,7 @@ void Button_Draw(Button *button, SDL_Renderer *renderer) {
 	default: break;
 	}
 
+/*
 	SDL_SetRenderDrawColor(
 		renderer,
 		button->palette->colors[12].r,
@@ -56,6 +57,8 @@ void Button_Draw(Button *button, SDL_Renderer *renderer) {
 		255);
 
 	SDL_RenderDrawRect(renderer, &rect);
+*/
+
 }
 
 bool Button_Update(Button *button, Mouse *mouse) {

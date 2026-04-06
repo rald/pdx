@@ -155,24 +155,18 @@ ScrollBar *ScrollBar_New(
 
 	switch(orientation) {
 	case SCROLLBAR_ORIENTATION_VERTICAL:
-		scrollBar->buttonUp = Button_New(x, y, w, 16, palette);
-		scrollBar->buttonDown = Button_New(x, y + h - 16, w, 16, palette);
-		scrollBar->buttonLeft = NULL;
-		scrollBar->buttonRight = NULL;
+		scrollBar->buttonFirst = Button_New(x, y, w, 16, palette);
+		scrollBar->buttonSecond = Button_New(x, y + h - 16, w, 16, palette);
 		break;
 
 	case SCROLLBAR_ORIENTATION_HORIZONTAL:
-		scrollBar->buttonLeft = Button_New(x, y, 16, h, palette);
-		scrollBar->buttonRight = Button_New(x + w - 16, y, 16, h, palette);
-		scrollBar->buttonUp = NULL;
-		scrollBar->buttonDown = NULL;
+		scrollBar->buttonFirst = Button_New(x, y, 16, h, palette);
+		scrollBar->buttonSecond = Button_New(x + w - 16, y, 16, h, palette);
 		break;
 
 	default:
-		scrollBar->buttonUp = NULL;
-		scrollBar->buttonDown = NULL;
-		scrollBar->buttonLeft = NULL;
-		scrollBar->buttonRight = NULL;
+		scrollBar->buttonFirst = NULL;
+		scrollBar->buttonSecond = NULL;
 		break;
 	}
 
@@ -188,8 +182,8 @@ void ScrollBar_Update(ScrollBar *scrollBar, Mouse *mouse) {
 
 	switch(scrollBar->orientation) {
 	case SCROLLBAR_ORIENTATION_VERTICAL:
-		if(Button_Update(scrollBar->buttonUp, mouse)) scrollBar->scrollPosition--;
-		if(Button_Update(scrollBar->buttonDown, mouse)) scrollBar->scrollPosition++;
+		if(Button_Update(scrollBar->buttonFirst, mouse)) scrollBar->scrollPosition--;
+		if(Button_Update(scrollBar->buttonSecond, mouse)) scrollBar->scrollPosition++;
 
 		trackStart = ScrollBar_GetTrackStart(scrollBar);
 		trackLen = scrollBar->trackArea;
@@ -220,8 +214,8 @@ void ScrollBar_Update(ScrollBar *scrollBar, Mouse *mouse) {
 		break;
 
 	case SCROLLBAR_ORIENTATION_HORIZONTAL:
-		if(Button_Update(scrollBar->buttonLeft, mouse)) scrollBar->scrollPosition--;
-		if(Button_Update(scrollBar->buttonRight, mouse)) scrollBar->scrollPosition++;
+		if(Button_Update(scrollBar->buttonFirst, mouse)) scrollBar->scrollPosition--;
+		if(Button_Update(scrollBar->buttonSecond, mouse)) scrollBar->scrollPosition++;
 
 		trackStart = ScrollBar_GetTrackStart(scrollBar);
 		trackLen = scrollBar->trackArea;
@@ -269,20 +263,8 @@ void ScrollBar_Draw(ScrollBar *scrollBar, SDL_Renderer *renderer) {
 
 	SDL_RenderDrawRect(renderer, &clip);
 
-	switch(scrollBar->orientation) {
-	case SCROLLBAR_ORIENTATION_VERTICAL:
-		Button_Draw(scrollBar->buttonUp, renderer);
-		Button_Draw(scrollBar->buttonDown, renderer);
-		break;
-
-	case SCROLLBAR_ORIENTATION_HORIZONTAL:
-		Button_Draw(scrollBar->buttonLeft, renderer);
-		Button_Draw(scrollBar->buttonRight, renderer);
-		break;
-
-	default:
-		break;
-	}
+	Button_Draw(scrollBar->buttonFirst, renderer);
+	Button_Draw(scrollBar->buttonSecond, renderer);
 
 	SDL_SetRenderDrawColor(renderer,
 		scrollBar->palette->colors[13].r,

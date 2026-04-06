@@ -22,10 +22,8 @@ typedef struct {
 	Palette *palette;
 	Canvas *canvas;
 
-	Button *buttonUp;
-	Button *buttonDown;
-	Button *buttonLeft;
-	Button *buttonRight;
+	Button *buttonFirst;
+	Button *buttonSecond;
 	SDL_Rect rectThumb;
 
 	int thumbSize;

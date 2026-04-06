@@ -9,6 +9,7 @@
 #include "target.h"
 #include "button.h"
 #include "scrollbar.h"
+#include "MyWindow.h"
 
 
 #include "gifenc.h"
@@ -53,8 +54,7 @@ Mouse *mouse = NULL;
 Palette *palette = NULL;
 Target *target = NULL;
 
-ScrollBar *scrollBarVertical;
-ScrollBar *scrollBarHorizontal;
+MyWindow *myWindow = NULL;
 
 int main(int argc,char *argv[]) {
 
@@ -77,33 +77,12 @@ int main(int argc,char *argv[]) {
 	SDL_WarpMouseInWindow(window, mouse->x, mouse->y);
 
 
-/*
-	canvas=Canvas_New(
-		palette,
-		0,0,256,256,4,-1,
-		12,6,false,1,0
-	);
-*/
-
 	canvas=Canvas_LoadCVS("cvs/dog.cvs", palette);
 	
 	target=Target_New(palette,canvas,0,0);
 
+	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32);
 	
-	scrollBarVertical = ScrollBar_New(
-		palette, canvas,
-		SCROLLBAR_ORIENTATION_VERTICAL,
-		SCREEN_WIDTH - 16, 0, 
-		16, SCREEN_HEIGHT - 32 - 16);
-
-	scrollBarHorizontal = ScrollBar_New(
-		palette, canvas,
-		SCROLLBAR_ORIENTATION_HORIZONTAL,
-		0, SCREEN_HEIGHT - 32 - 16, 
-		SCREEN_WIDTH - 16, 16);
-
-
-
     while(!quit) {
 
         while(SDL_PollEvent(&event)) {
@@ -132,15 +111,12 @@ int main(int argc,char *argv[]) {
 		SDL_RenderClear(renderer);
 
         Mouse_Update(mouse);
+		MyWindow_Update(myWindow, mouse);
 		Palette_Update(palette, mouse);	
-		ScrollBar_Update(scrollBarVertical, mouse);
-		ScrollBar_Update(scrollBarHorizontal, mouse);
 		Target_Update(target, mouse);
-
-		Canvas_Draw(canvas, renderer, (SDL_Rect) {0, 0, SCREEN_WIDTH - 16, SCREEN_HEIGHT - 32 - 16} );
+		
+		MyWindow_Draw(myWindow, renderer);
 		Palette_Draw(palette, renderer);
-		ScrollBar_Draw(scrollBarVertical,renderer);
-		ScrollBar_Draw(scrollBarHorizontal,renderer);
 		Target_Draw(target, renderer);
 
 	    SDL_RenderPresent(renderer);
