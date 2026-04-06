@@ -3,288 +3,192 @@
 #include <stdlib.h>
 #include "scrollbar.h"
 
-static int ScrollBar_GetViewPortSize(ScrollBar *scrollBar) {
-	return scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL
-		? scrollBar->viewPortH
-		: scrollBar->viewPortW;
+static int ScrollBar_GetViewPortSize(ScrollBar *s) {
+    return s->orientation == SCROLLBAR_ORIENTATION_VERTICAL ? s->viewPortH : s->viewPortW;
 }
 
-
-static int ScrollBar_GetTrackArea(ScrollBar *scrollBar) {
-	return scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL
-		? scrollBar->viewPortH - scrollBar->buttonSize * 2
-		: scrollBar->viewPortW - scrollBar->buttonSize * 2;
+static int ScrollBar_GetTrackArea(ScrollBar *s) {
+    return s->orientation == SCROLLBAR_ORIENTATION_VERTICAL
+        ? s->h - s->buttonSize * 2
+        : s->w - s->buttonSize * 2;
 }
 
-static int ScrollBar_GetContentSize(ScrollBar *scrollBar) {
-	if(scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
-		return scrollBar->canvas->gridShow
-			? scrollBar->canvas->h * (scrollBar->canvas->pixelSize + 1) + 1
-			: scrollBar->canvas->h * scrollBar->canvas->pixelSize;
-	}
-
-	return scrollBar->canvas->gridShow
-		? scrollBar->canvas->w * (scrollBar->canvas->pixelSize + 1) + 1
-		: scrollBar->canvas->w * scrollBar->canvas->pixelSize;
+static int ScrollBar_GetContentSize(ScrollBar *s) {
+    if(s->orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
+        return s->canvas->gridShow
+            ? s->canvas->h * (s->canvas->pixelSize + 1) + 1
+            : s->canvas->h * s->canvas->pixelSize;
+    }
+    return s->canvas->gridShow
+        ? s->canvas->w * (s->canvas->pixelSize + 1) + 1
+        : s->canvas->w * s->canvas->pixelSize;
 }
 
-static int ScrollBar_GetTrackStart(ScrollBar *scrollBar) {
-	return scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL
-		? scrollBar->y + 16
-		: scrollBar->x + 16;
+static int ScrollBar_GetTrackStart(ScrollBar *s) {
+    return s->orientation == SCROLLBAR_ORIENTATION_VERTICAL ? s->y + s->buttonSize : s->x + s->buttonSize;
 }
 
-static void ScrollBar_UpdateThumbRect(ScrollBar *scrollBar) {
-	if(scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
-		scrollBar->rectThumb = (SDL_Rect){
-			scrollBar->x,
-			scrollBar->y + 16 + scrollBar->thumbPosition,
-			scrollBar->w,
-			scrollBar->thumbSize
-		};
-	} else {
-		scrollBar->rectThumb = (SDL_Rect){
-			scrollBar->x + 16 + scrollBar->thumbPosition,
-			scrollBar->y,
-			scrollBar->thumbSize,
-			scrollBar->h
-		};
-	}
+static void ScrollBar_UpdateThumbRect(ScrollBar *s) {
+    if(s->orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
+        s->rectThumb = (SDL_Rect){ s->x, s->y + s->buttonSize + s->thumbPosition, s->w, s->thumbSize };
+    } else {
+        s->rectThumb = (SDL_Rect){ s->x + s->buttonSize + s->thumbPosition, s->y, s->thumbSize, s->h };
+    }
 }
 
-static void ScrollBar_ApplyThumb(ScrollBar *scrollBar) {
-	int maxScroll = scrollBar->contentSize - scrollBar->viewPortSize;
+static void ScrollBar_ApplyThumb(ScrollBar *s) {
+    int maxScroll = s->contentSize - s->viewPortSize;
 
-	if(maxScroll <= 0) {
-		scrollBar->scrollPosition = 0;
-		scrollBar->thumbPosition = 0;
-		scrollBar->contentScrollPosition = 0;
-		scrollBar->thumbSize = scrollBar->trackArea;
-		if(scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL) scrollBar->canvas->y = 0;
-		else scrollBar->canvas->x = 0;
-		return;
-	}
+    if(maxScroll <= 0) {
+        s->scrollPosition = 0;
+        s->thumbPosition = 0;
+        s->contentScrollPosition = 0;
+        s->thumbSize = s->trackArea;
+        if(s->orientation == SCROLLBAR_ORIENTATION_VERTICAL) s->canvas->y = 0;
+        else s->canvas->x = 0;
+        return;
+    }
 
-	scrollBar->scrollPosition = clamp(scrollBar->scrollPosition, 0, maxScroll);
+    s->scrollPosition = clamp(s->scrollPosition, 0, maxScroll);
 
-	scrollBar->thumbSize = (int)((double)scrollBar->viewPortSize / scrollBar->contentSize * scrollBar->trackArea);
-	scrollBar->thumbSize = clamp(scrollBar->thumbSize, 1, scrollBar->trackArea);
+    s->thumbSize = (int)((double)s->viewPortSize / s->contentSize * s->trackArea);
+    s->thumbSize = clamp(s->thumbSize, 1, s->trackArea);
 
-	if(scrollBar->trackArea - scrollBar->thumbSize > 0) {
-		scrollBar->thumbPosition =
-			(int)((double)scrollBar->scrollPosition / maxScroll * (scrollBar->trackArea - scrollBar->thumbSize));
-		scrollBar->contentScrollPosition =
-			(int)((double)scrollBar->thumbPosition / (scrollBar->trackArea - scrollBar->thumbSize) * maxScroll);
-	} else {
-		scrollBar->thumbPosition = 0;
-		scrollBar->contentScrollPosition = 0;
-	}
+    int span = s->trackArea - s->thumbSize;
+    if(span > 0) {
+        s->thumbPosition = (int)((double)s->scrollPosition / maxScroll * span);
+        s->contentScrollPosition = (int)((double)s->thumbPosition / span * maxScroll);
+    } else {
+        s->thumbPosition = 0;
+        s->contentScrollPosition = 0;
+    }
 
-	if(scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL) scrollBar->canvas->y = -scrollBar->contentScrollPosition;
-	else scrollBar->canvas->x = -scrollBar->contentScrollPosition;
+    if(s->orientation == SCROLLBAR_ORIENTATION_VERTICAL) s->canvas->y = -s->contentScrollPosition;
+    else s->canvas->x = -s->contentScrollPosition;
 }
 
-static void ScrollBar_BeginDrag(ScrollBar *scrollBar, Mouse *mouse, int trackStart) {
-	if(scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
-		scrollBar->dragging = 1;
-		scrollBar->dragOffset = mouse->y - (trackStart + scrollBar->thumbPosition);
-	} else {
-		scrollBar->dragging = 1;
-		scrollBar->dragOffset = mouse->x - (trackStart + scrollBar->thumbPosition);
-	}
+static void ScrollBar_BeginDrag(ScrollBar *s, Mouse *mouse, int trackStart) {
+    s->dragging = 1;
+    s->dragOffset = (s->orientation == SCROLLBAR_ORIENTATION_VERTICAL)
+        ? mouse->y - (trackStart + s->thumbPosition)
+        : mouse->x - (trackStart + s->thumbPosition);
 }
 
-static void ScrollBar_DoDrag(ScrollBar *scrollBar, Mouse *mouse, int trackStart, int trackLen) {
-	int mousePos, newThumbPos, maxScroll;
+static void ScrollBar_DoDrag(ScrollBar *s, Mouse *mouse, int trackStart, int trackLen) {
+    int maxScroll = s->contentSize - s->viewPortSize;
+    if(maxScroll <= 0) return;
 
-	maxScroll = scrollBar->contentSize - scrollBar->viewPortSize;
-	if(maxScroll <= 0) return;
+    int mousePos = (s->orientation == SCROLLBAR_ORIENTATION_VERTICAL) ? mouse->y : mouse->x;
+    int span = trackLen - s->thumbSize;
+    if(span <= 0) return;
 
-	mousePos = (scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL) ? mouse->y : mouse->x;
+    s->thumbPosition = clamp(mousePos - trackStart - s->dragOffset, 0, span);
+    s->scrollPosition = (int)((double)s->thumbPosition / span * maxScroll);
+    s->contentScrollPosition = s->scrollPosition;
 
-	newThumbPos = clamp(
-		mousePos - trackStart - scrollBar->dragOffset,
-		0,
-		trackLen - scrollBar->thumbSize
-	);
-
-	scrollBar->thumbPosition = newThumbPos;
-	scrollBar->scrollPosition =
-		(int)((double)scrollBar->thumbPosition / (trackLen - scrollBar->thumbSize) * maxScroll);
-
-	scrollBar->contentScrollPosition = scrollBar->scrollPosition;
-
-	if(scrollBar->orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
-		scrollBar->canvas->y = -scrollBar->contentScrollPosition;
-	} else {
-		scrollBar->canvas->x = -scrollBar->contentScrollPosition;
-	}
+    if(s->orientation == SCROLLBAR_ORIENTATION_VERTICAL) s->canvas->y = -s->contentScrollPosition;
+    else s->canvas->x = -s->contentScrollPosition;
 }
 
-static void ScrollBar_Refresh(ScrollBar *scrollBar) {
-	scrollBar->viewPortSize = ScrollBar_GetViewPortSize(scrollBar);
-	scrollBar->trackArea = ScrollBar_GetTrackArea(scrollBar);
-	scrollBar->contentSize = ScrollBar_GetContentSize(scrollBar);
-	ScrollBar_ApplyThumb(scrollBar);
-	ScrollBar_UpdateThumbRect(scrollBar);
+static void ScrollBar_Refresh(ScrollBar *s) {
+    s->viewPortSize = ScrollBar_GetViewPortSize(s);
+    s->trackArea = ScrollBar_GetTrackArea(s);
+    s->contentSize = ScrollBar_GetContentSize(s);
+    ScrollBar_ApplyThumb(s);
+    ScrollBar_UpdateThumbRect(s);
 }
 
 ScrollBar *ScrollBar_New(
-		Palette *palette, Canvas *canvas,
-		ScrollBarOrientation orientation,
-		int x, int y, int w, int h,
-		int viewPortW, int viewPortH,
-		int buttonSize) {
+    Palette *palette, Canvas *canvas,
+    ScrollBarOrientation orientation,
+    int x, int y, int w, int h,
+    int viewPortW, int viewPortH,
+    int buttonSize) {
 
-	ScrollBar *scrollBar = malloc(sizeof(*scrollBar));
-	if(!scrollBar) return NULL;
+    ScrollBar *s = malloc(sizeof(*s));
+    if(!s) return NULL;
 
-	scrollBar->orientation = orientation;
-	scrollBar->x = x;
-	scrollBar->y = y;
-	scrollBar->w = w;
-	scrollBar->h = h;
-	
-	scrollBar->viewPortW = viewPortW;
-	scrollBar->viewPortH = viewPortH;
-	scrollBar->buttonSize = buttonSize;
-		
-	scrollBar->palette = palette;
-	scrollBar->canvas = canvas;
-	scrollBar->scrollPosition = 0;
-	scrollBar->contentScrollPosition = 0;
-	scrollBar->thumbPosition = 0;
-	scrollBar->thumbSize = 0;
-	scrollBar->viewPortSize = 0;
-	scrollBar->contentSize = 0;
-	scrollBar->trackArea = 0;
-	scrollBar->dragging = 0;
-	scrollBar->dragOffset = 0;
+    s->orientation = orientation;
+    s->x = x;
+    s->y = y;
+    s->w = w;
+    s->h = h;
+    s->viewPortW = viewPortW;
+    s->viewPortH = viewPortH;
+    s->buttonSize = buttonSize;
+    s->palette = palette;
+    s->canvas = canvas;
+    s->scrollPosition = 0;
+    s->contentScrollPosition = 0;
+    s->thumbPosition = 0;
+    s->thumbSize = 0;
+    s->viewPortSize = 0;
+    s->contentSize = 0;
+    s->trackArea = 0;
+    s->dragging = 0;
+    s->dragOffset = 0;
 
-	switch(orientation) {
-	case SCROLLBAR_ORIENTATION_VERTICAL:
-		scrollBar->buttonFirst = Button_New(x, y, w, buttonSize, palette);
-		scrollBar->buttonSecond = Button_New(x, y + h - buttonSize, w, buttonSize, palette);
-		break;
+    if(orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
+        s->buttonFirst = Button_New(x, y, w, buttonSize, palette);
+        s->buttonSecond = Button_New(x, y + h - buttonSize, w, buttonSize, palette);
+    } else {
+        s->buttonFirst = Button_New(x, y, buttonSize, h, palette);
+        s->buttonSecond = Button_New(x + w - buttonSize, y, buttonSize, h, palette);
+    }
 
-	case SCROLLBAR_ORIENTATION_HORIZONTAL:
-		scrollBar->buttonFirst = Button_New(x, y, buttonSize, h, palette);
-		scrollBar->buttonSecond = Button_New(x + w - buttonSize, y, buttonSize, h, palette);
-		break;
-
-	default:
-		scrollBar->buttonFirst = NULL;
-		scrollBar->buttonSecond = NULL;
-		break;
-	}
-
-	ScrollBar_Refresh(scrollBar);
-	return scrollBar;
+    ScrollBar_Refresh(s);
+    return s;
 }
 
-void ScrollBar_Update(ScrollBar *scrollBar, Mouse *mouse) {
-	int trackStart, trackLen, thumbStart, thumbEnd;
-	SDL_Rect thumbHit;
+void ScrollBar_Update(ScrollBar *s, Mouse *mouse) {
+    ScrollBar_Refresh(s);
 
-	ScrollBar_Refresh(scrollBar);
+    if(Button_Update(s->buttonFirst, mouse)) s->scrollPosition--;
+    if(Button_Update(s->buttonSecond, mouse)) s->scrollPosition++;
 
-	switch(scrollBar->orientation) {
-	case SCROLLBAR_ORIENTATION_VERTICAL:
-		if(Button_Update(scrollBar->buttonFirst, mouse)) scrollBar->scrollPosition--;
-		if(Button_Update(scrollBar->buttonSecond, mouse)) scrollBar->scrollPosition++;
+    int trackStart = ScrollBar_GetTrackStart(s);
+    int trackLen = s->trackArea;
 
-		trackStart = ScrollBar_GetTrackStart(scrollBar);
-		trackLen = scrollBar->trackArea;
+    ScrollBar_ApplyThumb(s);
 
-		ScrollBar_ApplyThumb(scrollBar);
+    if(mouse->state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+        if(!s->dragging) {
+            if(inrect(mouse->x, mouse->y, s->rectThumb.x, s->rectThumb.y, s->rectThumb.w, s->rectThumb.h)) {
+                ScrollBar_BeginDrag(s, mouse, trackStart);
+            }
+        } else {
+            ScrollBar_DoDrag(s, mouse, trackStart, trackLen);
+        }
+    } else {
+        s->dragging = 0;
+    }
 
-		thumbHit = (SDL_Rect){
-			scrollBar->x,
-			trackStart + scrollBar->thumbPosition,
-			scrollBar->w,
-			scrollBar->thumbSize
-		};
-
-		if(mouse->state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-			if(!scrollBar->dragging) {
-				if(inrect(mouse->x, mouse->y, thumbHit.x, thumbHit.y, thumbHit.w, thumbHit.h)) {
-					ScrollBar_BeginDrag(scrollBar, mouse, trackStart);
-				}
-			} else {
-				ScrollBar_DoDrag(scrollBar, mouse, trackStart, trackLen);
-			}
-		} else {
-			scrollBar->dragging = 0;
-		}
-
-		ScrollBar_ApplyThumb(scrollBar);
-		ScrollBar_UpdateThumbRect(scrollBar);
-		break;
-
-	case SCROLLBAR_ORIENTATION_HORIZONTAL:
-		if(Button_Update(scrollBar->buttonFirst, mouse)) scrollBar->scrollPosition--;
-		if(Button_Update(scrollBar->buttonSecond, mouse)) scrollBar->scrollPosition++;
-
-		trackStart = ScrollBar_GetTrackStart(scrollBar);
-		trackLen = scrollBar->trackArea;
-
-		ScrollBar_ApplyThumb(scrollBar);
-
-		thumbHit = (SDL_Rect){
-			trackStart + scrollBar->thumbPosition,
-			scrollBar->y,
-			scrollBar->thumbSize,
-			scrollBar->h
-		};
-
-		if(mouse->state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-			if(!scrollBar->dragging) {
-				if(inrect(mouse->x, mouse->y, thumbHit.x, thumbHit.y, thumbHit.w, thumbHit.h)) {
-					ScrollBar_BeginDrag(scrollBar, mouse, trackStart);
-				}
-			} else {
-				ScrollBar_DoDrag(scrollBar, mouse, trackStart, trackLen);
-			}
-		} else {
-			scrollBar->dragging = 0;
-		}
-
-		ScrollBar_ApplyThumb(scrollBar);
-		ScrollBar_UpdateThumbRect(scrollBar);
-		break;
-
-	default:
-		break;
-	}
+    ScrollBar_ApplyThumb(s);
+    ScrollBar_UpdateThumbRect(s);
 }
 
-void ScrollBar_Draw(ScrollBar *scrollBar, SDL_Renderer *renderer) {
+void ScrollBar_Draw(ScrollBar *s, SDL_Renderer *renderer) {
+    SDL_Rect clip = { s->x, s->y, s->w, s->h };
+    SDL_RenderSetClipRect(renderer, &clip);
 
-	SDL_Rect clip = { scrollBar->x, scrollBar->y, scrollBar->w, scrollBar->h };
-	SDL_RenderSetClipRect(renderer, &clip);
+    Button_Draw(s->buttonFirst, renderer);
+    Button_Draw(s->buttonSecond, renderer);
 
-	Button_Draw(scrollBar->buttonFirst, renderer);
-	Button_Draw(scrollBar->buttonSecond, renderer);
+    SDL_SetRenderDrawColor(renderer,
+        s->palette->colors[13].r,
+        s->palette->colors[13].g,
+        s->palette->colors[13].b,
+        255);
+    SDL_RenderFillRect(renderer, &s->rectThumb);
 
-	SDL_SetRenderDrawColor(renderer,
-		scrollBar->palette->colors[13].r,
-		scrollBar->palette->colors[13].g,
-		scrollBar->palette->colors[13].b,
-		255
-	);
+    SDL_SetRenderDrawColor(renderer,
+        s->palette->colors[12].r,
+        s->palette->colors[12].g,
+        s->palette->colors[12].b,
+        255);
+    SDL_RenderDrawRect(renderer, &clip);
 
-	SDL_RenderFillRect(renderer, &scrollBar->rectThumb);
-
-	SDL_SetRenderDrawColor(renderer,
-		scrollBar->palette->colors[12].r,
-		scrollBar->palette->colors[12].g,
-		scrollBar->palette->colors[12].b,
-		255
-	);
-
-	SDL_RenderDrawRect(renderer, &clip);
-
-	SDL_RenderSetClipRect(renderer, NULL);
+    SDL_RenderSetClipRect(renderer, NULL);
 }
 
 

@@ -5,7 +5,6 @@
 
 Target *Target_New(Palette *palette, Canvas *canvas, int x, int y) {
     Target *target = malloc(sizeof(*target));
-
     if(!target) return NULL;
 
     target->palette = palette;
@@ -13,7 +12,6 @@ Target *Target_New(Palette *palette, Canvas *canvas, int x, int y) {
     target->x = x;
     target->y = y;
     target->visible = true;
-
     return target;
 }
 
@@ -21,74 +19,41 @@ void Target_Free(Target *target) {
     free(target);
 }
 
-
 void Target_Update(Target *target, Mouse *mouse) {
-    if(mouse->state & SDL_BUTTON_RMASK) {
-        int step = target->canvas->gridShow ? target->canvas->pixelSize + 1 : target->canvas->pixelSize;
-        int localX, localY;
-        int cellX, cellY;
+    if(!(mouse->state & SDL_BUTTON_RMASK)) return;
 
-        if(step <= 0) return;
+    int step = target->canvas->gridShow ? target->canvas->pixelSize + 1 : target->canvas->pixelSize;
+    if(step <= 0) return;
 
-        localX = mouse->x - target->canvas->x;
-        localY = mouse->y - target->canvas->y;
+    int localX = mouse->x - target->canvas->x;
+    int localY = mouse->y - target->canvas->y;
 
-        cellX = localX / step;
-        cellY = localY / step;
+    int cellX = localX / step;
+    int cellY = localY / step;
 
-        if(localX < 0) cellX--;
-        if(localY < 0) cellY--;
+    if(localX < 0) cellX--;
+    if(localY < 0) cellY--;
 
-        target->x = target->canvas->x + cellX * step + (target->canvas->pixelSize / 2);
-        target->y = target->canvas->y + cellY * step + (target->canvas->pixelSize / 2);
-    }
+    target->x = target->canvas->x + cellX * step + (target->canvas->pixelSize / 2);
+    target->y = target->canvas->y + cellY * step + (target->canvas->pixelSize / 2);
 }
-
 
 void Target_Draw(Target *target, SDL_Renderer *renderer) {
-    int i, j;
-    Uint32 pixel;
-    Uint8 r, g, b, a;
+    int s = 4;
+    int x = target->x;
+    int y = target->y;
 
-    int w = 4 - -4 + 1, h = 4 - -4 + 1;
-    SDL_Rect area = { target->x - 4, target->y - 4, w, h };
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
-    SDL_Window *window = SDL_RenderGetWindow(renderer);
-    SDL_Surface *surface = SDL_GetWindowSurface(window);
-    Uint32 format = SDL_GetWindowPixelFormat(window);
-    int pitch = w * SDL_BYTESPERPIXEL(format);
-    Uint32 *pixels = malloc(pitch * h);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderDrawLine(renderer, x - s, y, x + s, y);
+    SDL_RenderDrawLine(renderer, x, y - s, x, y + s);
 
-    if(!pixels) return;
-
-	SDL_Rect clip = {0,0,640-16,480-32-16};
-	
-	SDL_RenderSetClipRect(renderer,&clip);
-
-    if (SDL_RenderReadPixels(renderer, &area, format, pixels, pitch) == 0) {
-        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-
-        for(i = -4; i <= 4; i++) {
-            int sx = i + 4;
-            int sy = 4;
-            pixel = pixels[sy * w + sx];
-            SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
-            SDL_SetRenderDrawColor(renderer, 255 - r, 255 - g, 255 - b, a);
-            SDL_RenderDrawPoint(renderer, target->x + i, target->y);
-        }
-
-        for(j = -4; j <= 4; j++) {
-            int sx = 4;
-            int sy = j + 4;
-            pixel = pixels[sy * w + sx];
-            SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
-            SDL_SetRenderDrawColor(renderer, 255 - r, 255 - g, 255 - b, a);
-            SDL_RenderDrawPoint(renderer, target->x, target->y + j);
-        }
-    }
-
-	SDL_RenderSetClipRect(renderer,NULL);
-
-    free(pixels);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderDrawPoint(renderer, x - 1, y);
+    SDL_RenderDrawPoint(renderer, x + 1, y);
+    SDL_RenderDrawPoint(renderer, x, y - 1);
+    SDL_RenderDrawPoint(renderer, x, y + 1);
 }
+
 
