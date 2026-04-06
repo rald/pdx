@@ -46,3 +46,5 @@ void ScrollBar_Draw(ScrollBar *scrollbar, SDL_Renderer *renderer);
 void ScrollBar_Update(ScrollBar *scrollbar, Mouse *mouse);
 
 #endif
+
+
