@@ -48,3 +48,5 @@ void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color);
 int Canvas_ReadPoint(Canvas *canvas, int x, int y);
 
 #endif
+
+

@@ -24,16 +24,26 @@ void Target_Free(Target *target) {
 
 void Target_Update(Target *target, Mouse *mouse) {
     if(mouse->state & SDL_BUTTON_RMASK) {
-        int localX = mouse->x - target->canvas->x;
-        int localY = mouse->y - target->canvas->y;
         int step = target->canvas->gridShow ? target->canvas->pixelSize + 1 : target->canvas->pixelSize;
+        int localX, localY;
+        int cellX, cellY;
 
         if(step <= 0) return;
 
-        target->x = target->canvas->x + (localX / step) * step + (target->canvas->pixelSize / 2);
-        target->y = target->canvas->y + (localY / step) * step + (target->canvas->pixelSize / 2);
+        localX = mouse->x - target->canvas->x;
+        localY = mouse->y - target->canvas->y;
+
+        cellX = localX / step;
+        cellY = localY / step;
+
+        if(localX < 0) cellX--;
+        if(localY < 0) cellY--;
+
+        target->x = target->canvas->x + cellX * step + (target->canvas->pixelSize / 2);
+        target->y = target->canvas->y + cellY * step + (target->canvas->pixelSize / 2);
     }
 }
+
 
 void Target_Draw(Target *target, SDL_Renderer *renderer) {
     int i, j;

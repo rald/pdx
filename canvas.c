@@ -2,7 +2,6 @@
 
 #include "canvas.h"
 
-/* canvas.c: fix Canvas_New */
 Canvas *Canvas_New(
     Palette *palette,
     int x, int y, int w, int h,
