@@ -12,6 +12,8 @@ Target *Target_New(Palette *palette, Canvas *canvas, int x, int y) {
     target->canvas = canvas;
     target->x = x;
     target->y = y;
+    target->cellX = canvas->w/2;
+    target->cellY = canvas->h/2;
     target->visible = true;
 
     return target;

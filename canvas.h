@@ -52,6 +52,11 @@ void Canvas_MouseToCell(Canvas *canvas, int mx, int my, int *cx, int *cy);
 
 void Canvas_FloodFill(Canvas *canvas, int x, int y, byte new_color, byte old_color);
 
+void Canvas_DrawRect(Canvas *canvas,int x0,int y0,int x1,int y1,int c);
+void Canvas_FillRect(Canvas *canvas,int x0,int y0,int x1,int y1,int c);
+void Canvas_DrawOval(Canvas *canvas,int x1, int y1, int x2, int y2,int c);
+void Canvas_FillOval(Canvas *canvas,int x0,int y0,int x1,int y1,int c);
+
 #endif
 
 

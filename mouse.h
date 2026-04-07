@@ -11,7 +11,7 @@ typedef struct {
 	Uint32 state;
 } Mouse;
 
-Mouse *Mouse_New(char *filename, int x, int y, SDL_Color transparent);
+Mouse *Mouse_New(char *filename, int x, int y, SDL_Color transparent, int hotSpotX, int hotSpotY);
 void Mouse_Free(Mouse *mouse);
 
 void Mouse_EventHandle(Mouse *mouse, SDL_Event event);

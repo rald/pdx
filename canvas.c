@@ -210,6 +210,147 @@ void Canvas_DrawLine(Canvas *canvas, int x0, int y0, int x1, int y1, byte color)
     }
 }
 
+void Canvas_DrawRect(Canvas *canvas,int x0,int y0,int x1,int y1,int c) {
+  int t,i,j;
+
+  if(x0>x1) { t=x0; x0=x1; x1=t; }
+  if(y0>y1) { t=y0; y0=y1; y1=t; }
+
+  for(i=x0;i<=x1;i++) {
+    Canvas_DrawPoint(canvas,i,y0,c);
+    Canvas_DrawPoint(canvas,i,y1,c);
+  }
+
+  for(j=y0;j<=y1;j++) {
+    Canvas_DrawPoint(canvas,x0,j,c);
+    Canvas_DrawPoint(canvas,x1,j,c);
+  }
+}
+
+void Canvas_FillRect(Canvas *canvas,int x0,int y0,int x1,int y1,int c) {
+  int t,i,j;
+
+  if(x0>x1) { t=x0; x0=x1; x1=t; }
+  if(y0>y1) { t=y0; y0=y1; y1=t; }
+
+  for(j=y0;j<=y1;j++) {
+    for(i=x0;i<=x1;i++) {
+      Canvas_DrawPoint(canvas,i,j,c);
+    }
+  }
+
+}
+
+static void plotPoints(Canvas *canvas, int xc,int yc,int x,int y,int c) {
+  Canvas_DrawPoint(canvas, xc + x, yc + y, c);
+  Canvas_DrawPoint(canvas, xc - x, yc + y, c);
+  Canvas_DrawPoint(canvas, xc + x, yc - y, c);
+  Canvas_DrawPoint(canvas, xc - x, yc - y, c);
+}
+
+void Canvas_DrawOval(Canvas *canvas,int x1, int y1, int x2, int y2,int c) {
+    int xc = (x1 + x2) / 2;
+    int yc = (y1 + y2) / 2;
+    long a = abs(x2 - x1) / 2;
+    long b = abs(y2 - y1) / 2;
+
+    long a2 = a * a;
+    long b2 = b * b;
+    long x = 0;
+    long y = b;
+    long d1 = b2 - (a2 * b) + (0.25 * a2);
+    long d2;
+    long dx = 2 * b2 * x;
+    long dy = 2 * a2 * y;
+
+    while (dx < dy) {
+        plotPoints(canvas, xc, yc, x, y, c);
+        if (d1 < 0) {
+            x++;
+            dx += 2 * b2;
+            d1 += dx + b2;
+        } else {
+            x++;
+            y--;
+            dx += 2 * b2;
+            dy -= 2 * a2;
+            d1 += dx - dy + b2;
+        }
+    }
+
+    d2 = b2 * (x + 0.5) * (x + 0.5) + a2 * (y - 1) * (y - 1) - a2 * b2;
+    while (y >= 0) {
+        plotPoints(canvas, xc, yc, x, y, c);
+        if (d2 > 0) {
+            y--;
+            dy -= 2 * a2;
+            d2 += a2 - dy;
+        } else {
+            y--;
+            x++;
+            dx += 2 * b2;
+            dy -= 2 * a2;
+            d2 += dx - dy + a2;
+        }
+    }
+}
+
+void Canvas_FillOval(Canvas *canvas,int x0,int y0,int x1,int y1,int c) {
+  int i,t,xc,yc,rx,ry;
+  long x,y;
+  long rx2,ry2;
+  long tworx2,twory2;
+  long p;
+
+  if(x0>x1) { t=x0; x0=x1; x1=t; }
+  if(y0>y1) { t=y0; y0=y1; y1=t; }
+
+  xc=(x0+x1)/2;
+  yc=(y0+y1)/2;
+  rx=(x1-x0)/2;
+  ry=(y1-y0)/2;
+
+  x=0; y=ry;
+  rx2=rx*rx;
+  ry2=ry*ry;
+  tworx2=2*rx2;
+  twory2=2*ry2;
+
+  p=ry2-(rx2*ry)+(0.25*rx2);
+
+  while(twory2 * x <= tworx2 * y) {
+    for(i=xc-x;i<=xc+x;i++) {
+      Canvas_DrawPoint(canvas,i,yc+y,c);
+      Canvas_DrawPoint(canvas,i,yc-y,c);
+    }
+
+    x++;
+    if(p<0) {
+      p+=twory2*x+ry2;
+    } else {
+      y--;
+      p+=twory2*x-tworx2*y+ry2;
+    }
+  }
+
+  p=ry2*(x+0.5)*(x+0.5)+rx2*(y-1)*(y-1)-rx2*ry2;
+
+  while(y>=0) {
+    for(i=xc-x;i<=xc+x;i++) {
+      Canvas_DrawPoint(canvas,i,yc+y,c);
+      Canvas_DrawPoint(canvas,i,yc-y,c);
+    }
+  
+    y--;
+    if(p>0) {
+      p+=rx2-tworx2*y;
+    } else {
+      x++;
+      p+=twory2*x-tworx2*y+rx2;
+    }
+  }
+}
+
 Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 	int i,j,k,l;
 	int c;
@@ -260,3 +401,22 @@ Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 
 	return canvas;
 }
+
+Canvas *Canvas_SaveCVS(Canvas *canvas, char *filename) {
+	int i,j,k;
+	int c;
+	char *hex="0123456789ABCDEF";
+	FILE *fp=fopen(filename,"wb");
+	fprintf(fp,"%d,%d,%d,%d\n\n",canvas->w,canvas->h,canvas->nframe,canvas->transparent);
+	for(j=0;j<canvas->h;j++) {
+		for(i=0;i<canvas->w;i++) {
+			k=hex[canvas->pixels[j*canvas->w+i]];
+			fputc(k,fp);				
+		}
+		fputc('\n',fp);
+	}
+	fputc('\n',fp);
+	fclose(fp);
+}
+
+

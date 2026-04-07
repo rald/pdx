@@ -59,11 +59,17 @@ MyWindow *myWindow = NULL;
 bool isDrawing = false;
 int dx = 0, dy = 0;
 int cx = 0, cy = 0;
+int tx = 0, ty = 0;
 byte oldColor,newColor;
 
 
 
 int main(int argc,char *argv[]) {
+
+	if(argc!=2) {
+		printf("Syntax: %s [filename.cvs]\n",argv[0]);
+		return EXIT_FAILURE;
+	}
 
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -79,12 +85,12 @@ int main(int argc,char *argv[]) {
                
 	palette = Palette_New(colors, ncolors, 0, SCREEN_HEIGHT - 32, 32 * ncolors, 32, 0, 32);
 
-	mouse = Mouse_New("images/mouse.bmp", SCREEN_WIDTH/2, SCREEN_HEIGHT/2, colors[15]);
+	mouse = Mouse_New("images/mouse.bmp", SCREEN_WIDTH/2, SCREEN_HEIGHT/2, colors[15], 0, 0);
 	SDL_SetCursor(mouse->cursor);
 	SDL_WarpMouseInWindow(window, mouse->x, mouse->y);
 
 
-	canvas=Canvas_LoadCVS("cvs/dog.cvs", palette);
+	canvas=Canvas_LoadCVS(argv[1], palette);
 	
 	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
 
@@ -115,11 +121,41 @@ int main(int argc,char *argv[]) {
 				case SDLK_g:
 					canvas->gridShow = !canvas->gridShow;
 					break;
+				case SDLK_l:
+					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
+					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
+					Canvas_DrawLine(canvas, tx, ty, cx, cy, palette->currentColor);
+					if(event.key.keysym.mod & KMOD_SHIFT) {
+						target->cellX=cx;
+						target->cellY=cy;					
+					}
+					break;
+				case SDLK_r:
+					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
+					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
+					if(event.key.keysym.mod & KMOD_SHIFT) {
+						Canvas_FillRect(canvas, tx, ty, cx, cy, palette->currentColor);					
+					} else {
+						Canvas_DrawRect(canvas, tx, ty, cx, cy, palette->currentColor);
+					}				
+					break;
+				case SDLK_o:
+					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
+					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
+					if(event.key.keysym.mod & KMOD_SHIFT) {
+						Canvas_FillOval(canvas, tx, ty, cx, cy, palette->currentColor);
+					} else {
+						Canvas_DrawOval(canvas, tx, ty, cx, cy, palette->currentColor);
+					}
+					break;
 				case SDLK_f:
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
 					oldColor = canvas->pixels[cy * canvas->w + cx];
 					newColor = palette->currentColor;
 					Canvas_FloodFill(canvas, cx, cy, newColor, oldColor);
+					break;
+				case SDLK_s:
+					Canvas_SaveCVS(canvas,argv[1]);
 					break;
 				default: 
 					break;			
@@ -134,6 +170,7 @@ int main(int argc,char *argv[]) {
 						isDrawing = true;
 						dx = cx;
 						dy = cy;
+						Canvas_DrawPoint(canvas, dx, dy, palette->currentColor);
 					}
 				}
 				break;
@@ -206,7 +243,7 @@ int main(int argc,char *argv[]) {
 
     SDL_Quit();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 

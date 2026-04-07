@@ -26,3 +26,5 @@ void Target_Update(Target *target, Mouse *mouse);
 void Target_Draw(Target *target, SDL_Renderer *renderer);
 
 #endif
+
+

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "mouse.h"
 
-Mouse *Mouse_New(char *filename, int x, int y, SDL_Color transparent) {
+Mouse *Mouse_New(char *filename, int x, int y, SDL_Color transparent, int hotSpotX,int hotSpotY) {
 	Mouse *mouse = malloc(sizeof(*mouse));
 	SDL_Surface *surface = NULL;
 
@@ -16,7 +16,7 @@ Mouse *Mouse_New(char *filename, int x, int y, SDL_Color transparent) {
 		surface = SDL_LoadBMP(filename);
 		if(surface) {
 			SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, transparent.r, transparent.g, transparent.b));
-			mouse->cursor = SDL_CreateColorCursor(surface, 0, 0);
+			mouse->cursor = SDL_CreateColorCursor(surface, hotSpotX, hotSpotY);
 			SDL_FreeSurface(surface);
 		}
 	}
