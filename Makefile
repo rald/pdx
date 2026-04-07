@@ -28,5 +28,3 @@ clean:
 	rm $(OBJS)
 	rm lecram/gifenc/libgifenc.a lecram/gifenc/gifenc.o
 	rm lecram/gifdec/libgifdec.a lecram/gifdec/gifdec.o
-	rm bmp2cvs/bmp2cvs
-	rm cvs2bmp/cvs2bmp
