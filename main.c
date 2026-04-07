@@ -125,7 +125,7 @@ int main(int argc,char *argv[]) {
 					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
 					Canvas_DrawLine(canvas, tx, ty, cx, cy, palette->currentColor);
-					if(event.key.keysym.mod & KMOD_SHIFT) {
+					if(!(event.key.keysym.mod & KMOD_SHIFT)) {
 						target->cellX=cx;
 						target->cellY=cy;					
 					}

@@ -9,9 +9,6 @@ OBJS = main.o utils.o canvas.o mouse.o target.o palette.o button.o scrollbar.o M
 
 all: libgifenc.a libgifdec.a game
 
-game: $(OBJS)
-	$(CC) -o $(EXE) $(OBJS) $(CFLAGS) $(LDFLAGS) $(LDLIBS)
-
 libgifenc.a: lecram/gifenc/gifenc.c lecram/gifenc/gifenc.h
 	$(CC) -c lecram/gifenc/gifenc.c -o lecram/gifenc/gifenc.o
 	ar rcs lecram/gifenc/libgifenc.a lecram/gifenc/gifenc.o
@@ -19,6 +16,9 @@ libgifenc.a: lecram/gifenc/gifenc.c lecram/gifenc/gifenc.h
 libgifdec.a: lecram/gifdec/gifdec.c lecram/gifdec/gifdec.h
 	$(CC) -c lecram/gifdec/gifdec.c -o lecram/gifdec/gifdec.o
 	ar rcs lecram/gifdec/libgifdec.a lecram/gifdec/gifdec.o
+
+game: $(OBJS)
+	$(CC) -o $(EXE) $(OBJS) $(CFLAGS) $(LDFLAGS) $(LDLIBS)
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(LDFLAGS) $(CFLAGS) $(LDLIBS)
@@ -28,4 +28,5 @@ clean:
 	rm $(OBJS)
 	rm lecram/gifenc/libgifenc.a lecram/gifenc/gifenc.o
 	rm lecram/gifdec/libgifdec.a lecram/gifdec/gifdec.o
-
+	rm bmp2cvs/bmp2cvs
+	rm cvs2bmp/cvs2bmp
