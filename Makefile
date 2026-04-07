@@ -1,3 +1,5 @@
+# file: Makefile
+
 CC = gcc
 EXE = game
 
