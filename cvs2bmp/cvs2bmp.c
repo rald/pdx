@@ -119,6 +119,7 @@ int main(int argc,char *argv[]) {
 
 	int i,j,k;
 	int f;
+	char filename[256];
 
 	if(argc!=3) {
 		fprintf(stderr,"Syntax: %s [filename.cvs] [filename.bmp]\n",argv[0]);
@@ -144,7 +145,9 @@ int main(int argc,char *argv[]) {
 			}
 		}
 		
-		if(SDL_SaveBMP(surface,argv[2])!=0) {
+		sprintf(filename,"%s.%d",argv[2],f);
+		
+		if(SDL_SaveBMP(surface,filename)!=0) {
 			fprintf(stderr,"Error: Failed to save BMP: %s\n", SDL_GetError());
 			return EXIT_FAILURE;
 		}
