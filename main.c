@@ -187,7 +187,7 @@ int main(int argc,char *argv[]) {
 						dy = cy;
 					}
 				}
-				break;
+				break;				
 			case SDL_MOUSEWHEEL:
 				if(overPalette || palette->scrubbing || overScrollBar || draggingScrollBar) continue;
 				if(event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
@@ -199,7 +199,7 @@ int main(int argc,char *argv[]) {
 				if(canvas->pixelSize < 32 && event.wheel.y > 0) { 
 					canvas->pixelSize++;
 				}				
-				break;                
+				break;
 	        default: 
 	        	break;
             }
