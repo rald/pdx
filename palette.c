@@ -77,4 +77,3 @@ void Palette_Draw(Palette *palette, SDL_Renderer *renderer) {
 	
 	SDL_RenderSetClipRect(renderer, NULL);
 }
-
