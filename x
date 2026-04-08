@@ -724,6 +724,14 @@ int main(int argc,char *argv[]) {
 				case SDLK_g:
 					canvas->gridShow = !canvas->gridShow;
 					break;
+                case SDLK_c: {
+                    int step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;                    
+                    int targetWorldX = target->cellX * step + (canvas->pixelSize / 2);
+                    int targetWorldY = target->cellY * step + (canvas->pixelSize / 2);
+                    myWindow->hscroll->scrollPosition = targetWorldX - (myWindow->viewPortW / 2);
+                    myWindow->vscroll->scrollPosition = targetWorldY - (myWindow->viewPortH / 2);
+                    break;
+                }
 				case SDLK_l:
 					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
