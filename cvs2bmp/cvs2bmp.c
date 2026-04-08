@@ -122,7 +122,7 @@ int main(int argc,char *argv[]) {
 	char filename[256];
 
 	if(argc!=3) {
-		fprintf(stderr,"Syntax: %s [filename.cvs] [filename.bmp]\n",argv[0]);
+		fprintf(stderr,"Syntax: %s [filename.cvs] [filename]\n",argv[0]);
 		return EXIT_FAILURE;
 	}
 
@@ -140,13 +140,13 @@ int main(int argc,char *argv[]) {
 
 		for(j=0;j<canvas->h;j++) {
 			for(i=0;i<canvas->w;i++) {
-				k=canvas->pixels[j*canvas->w+i];
+				k=canvas->pixels[f*canvas->w*canvas->h+j*canvas->w+i];
 				putpixel(surface,i,j,SDL_MapRGBA(surface->format,colors[k].r,colors[k].g,colors[k].b,255));
 			}
 		}
-		
-		sprintf(filename,"%s.%d",argv[2],f);
-		
+
+		sprintf(filename,"%s.%d.bmp",argv[2],f);
+
 		if(SDL_SaveBMP(surface,filename)!=0) {
 			fprintf(stderr,"Error: Failed to save BMP: %s\n", SDL_GetError());
 			return EXIT_FAILURE;
