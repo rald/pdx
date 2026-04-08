@@ -25,10 +25,15 @@ game: $(OBJS)
 %.o: %.c
 	$(CC) -c $< -o $@ $(LDFLAGS) $(CFLAGS) $(LDLIBS)
 
-.PHONY: clean
+.PHONY: clean run
 
 clean:
 	rm game
 	rm $(OBJS)
 	rm lecram/gifenc/libgifenc.a lecram/gifenc/gifenc.o
 	rm lecram/gifdec/libgifdec.a lecram/gifdec/gifdec.o
+
+run:
+	make
+	./game cvs/dog.cvs
+
