@@ -1,4 +1,4 @@
 #!/bin/sh
-reset && make && ./game cvs/dog.cvs
+make clean && reset && make && ./game cvs/digits.cvs
 
 

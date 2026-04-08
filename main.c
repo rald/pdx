@@ -56,12 +56,55 @@ Target *target = NULL;
 
 MyWindow *myWindow = NULL;
 
+Canvas *font = NULL;
+
 bool isDrawing = false;
 int dx = 0, dy = 0;
 int cx = 0, cy = 0;
 int tx = 0, ty = 0;
 byte oldColor,newColor;
 
+
+
+
+void DrawChar(SDL_Renderer *renderer, Canvas *font, Palette *palette, int x, int y, int pixelSize, byte ch) {
+	int i, j, k;
+	for(j = 0; j < font->h; j++) {
+		for(i = 0; i < font->w; i++) {
+
+			k = font->pixels[(ch - 32) * font->w * font->h + j * font->w + i];
+
+			if(k==font->transparent) continue;
+
+			SDL_SetRenderDrawColor(renderer,
+				palette->colors[k].r,
+				palette->colors[k].g,
+				palette->colors[k].b,
+				255
+			);
+
+			SDL_Rect rect = {
+				i * pixelSize+x, j * pixelSize+y,
+				pixelSize, pixelSize
+			};
+
+			SDL_RenderFillRect(renderer, &rect);
+		}
+	}
+}
+
+void DrawText(SDL_Renderer *renderer, Canvas *font, Palette *palette, int x0, int y0, int pixelSize, char *text) {
+	int i;
+	int x = x0, y = y0;
+	for(i=0;i<strlen(text);i++) {
+		DrawChar(renderer,font,palette,x,y,pixelSize,text[i]);
+		x+=font->w*pixelSize;
+		if(x+font->w>=SCREEN_WIDTH) {
+			x=0;
+			y+=font->h*pixelSize;
+		}
+	}
+}
 
 
 int main(int argc,char *argv[]) {
@@ -81,23 +124,24 @@ int main(int argc,char *argv[]) {
     renderer = SDL_CreateRenderer(window, -1,
                SDL_RENDERER_ACCELERATED |
                SDL_RENDERER_TARGETTEXTURE);
-               
-               
+
 	palette = Palette_New(colors, ncolors, 0, SCREEN_HEIGHT - 32, 32 * ncolors, 32, 0, 32);
 
 	mouse = Mouse_New("images/mouse.bmp", SCREEN_WIDTH/2, SCREEN_HEIGHT/2, colors[15], 0, 0);
 	SDL_SetCursor(mouse->cursor);
 	SDL_WarpMouseInWindow(window, mouse->x, mouse->y);
 
-
 	canvas=Canvas_LoadCVS(argv[1], palette);
-	
+
 	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
 
 	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32, 16);
-	
+
+
+	font=Canvas_LoadCVS("cvs/font-00.cvs", palette);
+
     while(!quit) {
-		
+
 		bool overPalette = inrect(mouse->x, mouse->y, palette->x, palette->y, palette->w, palette->h);
 
 		bool overScrollBar =
@@ -117,7 +161,7 @@ int main(int argc,char *argv[]) {
                 switch(event.key.keysym.sym) {
                 case SDLK_ESCAPE:
                     quit = true;
-                    break;                    
+                    break;
 				case SDLK_g:
 					canvas->gridShow = !canvas->gridShow;
 					break;
@@ -174,6 +218,14 @@ int main(int argc,char *argv[]) {
     				} else {
     					Canvas_SaveCVS(canvas,argv[1]);
     				}
+					break;
+				case SDLK_p:
+					canvas->frame--;
+					if(canvas->frame<0) canvas->frame=0;
+					break;
+				case SDLK_n:
+					canvas->frame++;
+					if(canvas->frame>=canvas->nframe) canvas->frame=canvas->nframe-1;
 					break;
 				default: 
 					break;			
@@ -264,13 +316,19 @@ int main(int argc,char *argv[]) {
 		}
 
 		Target_Update(target, mouse);
-		
+
 		MyWindow_Draw(myWindow, renderer);
 		Palette_Draw(palette, renderer);
 		Target_Draw(target, renderer);
 
+		{
+			char msg[256];
+			sprintf(msg,"%03d",canvas->frame);
+			DrawText(renderer,font,palette,SCREEN_WIDTH-3*font->w*2,SCREEN_HEIGHT-font->h*2,2,msg);
+		}
+
 	    SDL_RenderPresent(renderer);
-	    
+
 	    SDL_Delay(10);
     }
 

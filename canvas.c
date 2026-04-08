@@ -362,7 +362,7 @@ Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 		canvas->palette = palette;
 		canvas->x = 0;
 		canvas->y = 0;
-		canvas->gridColor = 6;
+		canvas->gridColor = 10;
 		canvas->gridShow = false;
 		canvas->pixelSize = 1;
 		canvas->frame = 0;
@@ -372,13 +372,13 @@ Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 			fprintf(stderr,"Error opening file %s: %s\n",filename,strerror(errno));
 			exit(-1);
 		}
-		
+
 		fscanf(fp,"%d,%d,%d,%d",&canvas->w,&canvas->h,&canvas->nframe,&canvas->transparent);
 
 		canvas->pixels = malloc((canvas->w * canvas->h * canvas->nframe) * sizeof(*canvas->pixels));
 		for(i = 0; i < canvas->w * canvas->h * canvas->nframe; i++) canvas->pixels[i]=12;
-		
-		i=0; l=1;	
+
+		i=0; l=1;
 		while((c=fgetc(fp))!=EOF) {
 			if(c==' ' || c=='\t') continue;
 			if(c=='\n') { l++; continue; }
@@ -390,7 +390,7 @@ Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 				}
 			}
 			if(j==-1) {
-				fprintf(stderr,"Line %d: invalid character.\n",l);
+				fprintf(stderr,"File %s: Line %d: invalid character.\n",filename,l);
 				exit(-1);
 			}
 			canvas->pixels[i++]=j;
@@ -411,12 +411,10 @@ Canvas *Canvas_SaveCVS(Canvas *canvas, char *filename) {
 	for(j=0;j<canvas->h;j++) {
 		for(i=0;i<canvas->w;i++) {
 			k=hex[canvas->pixels[j*canvas->w+i]];
-			fputc(k,fp);				
+			fputc(k,fp);
 		}
 		fputc('\n',fp);
 	}
 	fputc('\n',fp);
 	fclose(fp);
 }
-
-
