@@ -145,7 +145,7 @@ int main(int argc,char *argv[]) {
 			}
 		}
 
-		sprintf(filename,"%s.%d.bmp",argv[2],f);
+		sprintf(filename,"%s.%04d.bmp",argv[2],f);
 
 		if(SDL_SaveBMP(surface,filename)!=0) {
 			fprintf(stderr,"Error: Failed to save BMP: %s\n", SDL_GetError());

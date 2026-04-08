@@ -1,4 +1,4 @@
 #!/bin/sh
-make clean && reset && make && ./game cvs/digits.cvs
+reset && make && ./game cvs/digits.cvs
 
 
