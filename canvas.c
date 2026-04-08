@@ -138,6 +138,7 @@ void Canvas_Free(Canvas *canvas) {
 	free(canvas);
 }
 
+/*
 void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport) {
 
 	int i,j;
@@ -180,6 +181,73 @@ void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport) {
 
     SDL_RenderSetClipRect(renderer, NULL);
 }
+*/
+
+void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport) {
+    int i, j;
+    int px = canvas->pixelSize;
+    
+    /* If grid is shown, each 'cell' takes up pixelSize + 1 for the line */
+    int step = canvas->gridShow ? px + 1 : px;
+    if(step <= 0) return;
+
+    int base = canvas->frame * canvas->w * canvas->h;
+    
+    /* Calculate visible range */
+    int x0 = (-canvas->x) / step;
+    int y0 = (-canvas->y) / step;
+    int x1 = (-canvas->x + viewport.w) / step + 1;
+    int y1 = (-canvas->y + viewport.h) / step + 1;
+
+    if(x0 < 0) x0 = 0;
+    if(y0 < 0) y0 = 0;
+    if(x1 > canvas->w) x1 = canvas->w;
+    if(y1 > canvas->h) y1 = canvas->h;
+
+    SDL_RenderSetClipRect(renderer, &viewport);
+
+    /* 1. Draw the Grid Lines (if enabled) */
+    if (canvas->gridShow) {
+        SDL_Color gc = canvas->palette->colors[canvas->gridColor];
+        SDL_SetRenderDrawColor(renderer, gc.r, gc.g, gc.b, 255);
+
+        /* Draw Vertical Lines */
+        for (i = x0; i <= x1; i++) {
+            int lineX = canvas->x + (i * step);
+            SDL_RenderDrawLine(renderer, lineX, viewport.y, lineX, viewport.y + viewport.h);
+        }
+
+        /* Draw Horizontal Lines */
+        for (j = y0; j <= y1; j++) {
+            int lineY = canvas->y + (j * step);
+            SDL_RenderDrawLine(renderer, viewport.x, lineY, viewport.x + viewport.w, lineY);
+        }
+    }
+
+    /* 2. Draw the Pixels */
+    SDL_Rect rect;
+    for(j = y0; j < y1; j++) {
+        int row = base + j * canvas->w;
+        /* Offset the pixel by 1 if grid is showing to not overlap the top/left grid line */
+        rect.y = canvas->y + j * step + (canvas->gridShow ? 1 : 0);
+        rect.h = px;
+
+        for(i = x0; i < x1; i++) {
+            byte l = canvas->pixels[row + i];
+            if(l == canvas->transparent) continue;
+
+            rect.x = canvas->x + i * step + (canvas->gridShow ? 1 : 0);
+            rect.w = px;
+
+            SDL_Color c = canvas->palette->colors[l];
+            SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, 255);
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
+
+    SDL_RenderSetClipRect(renderer, NULL);
+}
+
 
 void Canvas_DrawPoint(Canvas *canvas, int x, int y, byte color) {
     if(x >= 0 && x < canvas->w && y >= 0 && y < canvas->h) {
