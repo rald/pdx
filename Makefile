@@ -25,6 +25,8 @@ game: $(OBJS)
 %.o: %.c
 	$(CC) -c $< -o $@ $(LDFLAGS) $(CFLAGS) $(LDLIBS)
 
+.PHONY: clean
+
 clean:
 	rm game
 	rm $(OBJS)

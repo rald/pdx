@@ -766,7 +766,17 @@ int main(int argc,char *argv[]) {
 					Canvas_FloodFill(canvas, cx, cy, newColor, oldColor);
 					break;
 				case SDLK_s:
-					Canvas_SaveCVS(canvas,argv[1]);
+					if(event.key.keysym.mod & KMOD_SHIFT) {
+					    MyWindow_Free(myWindow);
+					    Target_Free(target);
+					    Canvas_Free(canvas);
+					    					    
+                        canvas = Canvas_LoadCVS(argv[1], palette);
+                    	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
+                    	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32, 16);
+    				} else {
+    					Canvas_SaveCVS(canvas,argv[1]);
+    				}
 					break;
 				default: 
 					break;			
@@ -799,18 +809,42 @@ int main(int argc,char *argv[]) {
 					}
 				}
 				break;				
-			case SDL_MOUSEWHEEL:
-				if(overPalette || palette->scrubbing || overScrollBar || draggingScrollBar) continue;
-				if(event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
-					if(event.wheel.y > 0) event.wheel.y *= -1;
-				}
-				if(canvas->pixelSize > 1 && event.wheel.y < 0) { 
-					canvas->pixelSize--; 
-				} 
-				if(canvas->pixelSize < 32 && event.wheel.y > 0) { 
-					canvas->pixelSize++;
-				}				
-				break;
+            case SDL_MOUSEWHEEL:
+                if(overPalette || palette->scrubbing || overScrollBar || draggingScrollBar) continue;
+                {
+                    /* C89 requires declarations at the start of the block */
+                    int oldPixelSize = canvas->pixelSize;
+                    int targetCellX = target->cellX;
+                    int targetCellY = target->cellY;
+                    int step, targetWorldX, targetWorldY;
+
+                    if(event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+                        if(event.wheel.y > 0) event.wheel.y *= -1;
+                    }
+
+                    if(canvas->pixelSize > 1 && event.wheel.y < 0) { 
+                        canvas->pixelSize--; 
+                    } 
+                    else if(canvas->pixelSize < 32 && event.wheel.y > 0) { 
+                        canvas->pixelSize++;
+                    }
+
+                    /* If the zoom level changed, recalculate scroll positions to center the target */
+                    if (oldPixelSize != canvas->pixelSize) {
+                        step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
+                        
+                        /* Calculate the target's center in world pixels at the new scale */
+                        targetWorldX = targetCellX * step + (canvas->pixelSize / 2);
+                        targetWorldY = targetCellY * step + (canvas->pixelSize / 2);
+
+                        /* Adjust scrollbars so the target world position is at the viewport center */
+                        myWindow->hscroll->scrollPosition = targetWorldX - (myWindow->viewPortW / 2);
+                        myWindow->vscroll->scrollPosition = targetWorldY - (myWindow->viewPortH / 2);
+                        
+                        /* ScrollBar_Update (via MyWindow_Update) will clamp these values in the next frame */
+                    }
+                }
+                break;
 	        default: 
 	        	break;
             }
