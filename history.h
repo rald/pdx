@@ -5,10 +5,9 @@
 #include <stddef.h>
 
 struct Canvas;
-
 typedef struct History History;
 
-History* History_New(int capacity);
+History* History_New(int w, int h, int capacity);
 void History_Free(History* history);
 void History_Push(History* history, struct Canvas* canvas);
 int History_Undo(History* history, struct Canvas* canvas);

@@ -134,7 +134,7 @@ int main(int argc,char *argv[]) {
 	SDL_WarpMouseInWindow(window, mouse->x, mouse->y);
 
 	canvas=Canvas_LoadCVS(argv[1], palette);
-	history = History_New(100);
+	history = History_New(canvas->w, canvas->h, 100);
 
 	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
 
@@ -267,7 +267,7 @@ int main(int argc,char *argv[]) {
 					    History_Free(history);
 
                         canvas = Canvas_LoadCVS(argv[1], palette);
-                        history = History_New(100);
+                        history = History_New(canvas->w, canvas->h, 100);
                     	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
                     	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32, 16);
     				} else {

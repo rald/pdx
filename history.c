@@ -8,94 +8,92 @@ typedef struct {
     int* delays;
     int nframe;
     int frame;
-    int w, h;
-} HistoryState;
+    int transparent;
+} Snapshot;
 
 struct History {
+    int w, h;
     int capacity;
-    HistoryState* undo_stack;
+    Snapshot* undo_stack;
     int undo_top;
     int undo_bottom;
     int undo_count;
-    HistoryState* redo_stack;
+    Snapshot* redo_stack;
     int redo_top;
 };
 
-static void FreeState(HistoryState* state) {
-    if (state->pixels) free(state->pixels);
-    if (state->delays) free(state->delays);
-    state->pixels = NULL;
-    state->delays = NULL;
+static void Snapshot_Clear(Snapshot* s) {
+    if (s->pixels) free(s->pixels);
+    if (s->delays) free(s->delays);
+    s->pixels = NULL;
+    s->delays = NULL;
+    s->nframe = 0;
 }
 
-static int CopyCanvasToState(HistoryState* state, struct Canvas* canvas) {
+static int Snapshot_Copy(Snapshot* s, struct Canvas* canvas) {
     size_t pixel_size = canvas->w * canvas->h * canvas->nframe;
-    state->pixels = malloc(pixel_size);
-    if (!state->pixels) return 0;
-    memcpy(state->pixels, canvas->pixels, pixel_size);
-    
-    state->delays = malloc(sizeof(int) * canvas->nframe);
-    if (!state->delays) {
-        free(state->pixels);
-        state->pixels = NULL;
+    s->pixels = malloc(pixel_size);
+    if (!s->pixels) return 0;
+    memcpy(s->pixels, canvas->pixels, pixel_size);
+
+    s->delays = malloc(sizeof(int) * canvas->nframe);
+    if (!s->delays) {
+        free(s->pixels);
+        s->pixels = NULL;
         return 0;
     }
-    memcpy(state->delays, canvas->delays, sizeof(int) * canvas->nframe);
-    
-    state->nframe = canvas->nframe;
-    state->frame = canvas->frame;
-    state->w = canvas->w;
-    state->h = canvas->h;
+    memcpy(s->delays, canvas->delays, sizeof(int) * canvas->nframe);
+
+    s->nframe = canvas->nframe;
+    s->frame = canvas->frame;
+    s->transparent = canvas->transparent;
     return 1;
 }
 
-static void RestoreCanvasFromState(struct Canvas* canvas, HistoryState* state) {
-    size_t pixel_size = state->w * state->h * state->nframe;
-    
-    byte* new_pixels = realloc(canvas->pixels, pixel_size);
-    if (new_pixels) {
-        canvas->pixels = new_pixels;
-        memcpy(canvas->pixels, state->pixels, pixel_size);
-    }
-    
-    int* new_delays = realloc(canvas->delays, sizeof(int) * state->nframe);
-    if (new_delays) {
-        canvas->delays = new_delays;
-        memcpy(canvas->delays, state->delays, sizeof(int) * state->nframe);
-    }
-    
-    if (new_pixels && new_delays) {
-        canvas->nframe = state->nframe;
-        canvas->frame = state->frame;
-        canvas->w = state->w;
-        canvas->h = state->h;
-    }
+static int Snapshot_Restore(Snapshot* s, struct Canvas* canvas) {
+    byte* new_pixels = realloc(canvas->pixels, canvas->w * canvas->h * s->nframe);
+    if (!new_pixels) return 0;
+    canvas->pixels = new_pixels;
+
+    int* new_delays = realloc(canvas->delays, sizeof(int) * s->nframe);
+    if (!new_delays) return 0;
+    canvas->delays = new_delays;
+
+    memcpy(canvas->pixels, s->pixels, canvas->w * canvas->h * s->nframe);
+    memcpy(canvas->delays, s->delays, sizeof(int) * s->nframe);
+    canvas->nframe = s->nframe;
+    canvas->frame = s->frame;
+    canvas->transparent = s->transparent;
+    return 1;
 }
 
-History* History_New(int capacity) {
-    History* h = calloc(1, sizeof(History));
-    if (!h) return NULL;
-    h->capacity = capacity;
-    h->undo_stack = calloc(capacity, sizeof(HistoryState));
-    if (!h->undo_stack) {
-        free(h);
+History* History_New(int w, int h, int capacity) {
+    History* hist = malloc(sizeof(History));
+    if (!hist) return NULL;
+    hist->w = w;
+    hist->h = h;
+    hist->capacity = capacity;
+    hist->undo_stack = calloc(capacity, sizeof(Snapshot));
+    hist->redo_stack = calloc(capacity, sizeof(Snapshot));
+    if (!hist->undo_stack || !hist->redo_stack) {
+        free(hist->undo_stack);
+        free(hist->redo_stack);
+        free(hist);
         return NULL;
     }
-    h->redo_stack = calloc(capacity, sizeof(HistoryState));
-    if (!h->redo_stack) {
-        free(h->undo_stack);
-        free(h);
-        return NULL;
-    }
-    return h;
+    hist->undo_top = 0;
+    hist->undo_bottom = 0;
+    hist->undo_count = 0;
+    hist->redo_top = 0;
+    return hist;
 }
 
 void History_Free(History* h) {
     int i;
     if (!h) return;
     for (i = 0; i < h->capacity; i++) {
-        FreeState(&h->undo_stack[i]);
-        FreeState(&h->redo_stack[i]);
+        Snapshot_Clear(&h->undo_stack[i]);
+        Snapshot_Clear(&h->redo_stack[i]);
     }
     free(h->undo_stack);
     free(h->redo_stack);
@@ -105,39 +103,36 @@ void History_Free(History* h) {
 void History_Push(History* h, struct Canvas* canvas) {
     if (!h) return;
     
-    /* Clear redo stack */
+    /* Clear current redo stack because we're doing a new action */
     while (h->redo_top > 0) {
         h->redo_top--;
-        FreeState(&h->redo_stack[h->redo_top]);
+        Snapshot_Clear(&h->redo_stack[h->redo_top]);
     }
 
-    /* If we're at capacity, free the oldest undo state */
+    /* If undo stack is full, clear the oldest entry */
     if (h->undo_count == h->capacity) {
-        FreeState(&h->undo_stack[h->undo_bottom]);
+        Snapshot_Clear(&h->undo_stack[h->undo_bottom]);
         h->undo_bottom = (h->undo_bottom + 1) % h->capacity;
     } else {
         h->undo_count++;
     }
 
     /* Push current state to undo stack */
-    if (CopyCanvasToState(&h->undo_stack[h->undo_top], canvas)) {
-        h->undo_top = (h->undo_top + 1) % h->capacity;
-    }
+    Snapshot_Copy(&h->undo_stack[h->undo_top], canvas);
+    h->undo_top = (h->undo_top + 1) % h->capacity;
 }
 
 int History_Undo(History* h, struct Canvas* canvas) {
     if (!h || h->undo_count == 0) return 0;
 
-    /* Save current state to redo stack */
-    if (!CopyCanvasToState(&h->redo_stack[h->redo_top], canvas)) {
-        return 0;
-    }
+    /* Push current state to redo stack */
+    Snapshot_Copy(&h->redo_stack[h->redo_top], canvas);
     h->redo_top++;
     
-    /* Pop from undo stack */
+    /* Pop from undo stack and restore */
     h->undo_top = (h->undo_top - 1 + h->capacity) % h->capacity;
-    RestoreCanvasFromState(canvas, &h->undo_stack[h->undo_top]);
-    FreeState(&h->undo_stack[h->undo_top]);
+    Snapshot_Restore(&h->undo_stack[h->undo_top], canvas);
+    Snapshot_Clear(&h->undo_stack[h->undo_top]);
     h->undo_count--;
     return 1;
 }
@@ -145,23 +140,20 @@ int History_Undo(History* h, struct Canvas* canvas) {
 int History_Redo(History* h, struct Canvas* canvas) {
     if (!h || h->redo_top == 0) return 0;
 
-    /* Push current state back to undo stack */
-    if (!CopyCanvasToState(&h->undo_stack[h->undo_top], canvas)) {
-        return 0;
-    }
-    h->undo_top = (h->undo_top + 1) % h->capacity;
-    if (h->undo_count < h->capacity) {
-        h->undo_count++;
-    } else {
-        /* This should ideally not happen if push/undo are balanced, but for safety: */
-        FreeState(&h->undo_stack[h->undo_bottom]);
+    /* Push current state to undo stack */
+    if (h->undo_count == h->capacity) {
+        Snapshot_Clear(&h->undo_stack[h->undo_bottom]);
         h->undo_bottom = (h->undo_bottom + 1) % h->capacity;
+    } else {
+        h->undo_count++;
     }
+    Snapshot_Copy(&h->undo_stack[h->undo_top], canvas);
+    h->undo_top = (h->undo_top + 1) % h->capacity;
     
-    /* Pop from redo stack */
+    /* Pop from redo stack and restore */
     h->redo_top--;
-    RestoreCanvasFromState(canvas, &h->redo_stack[h->redo_top]);
-    FreeState(&h->redo_stack[h->redo_top]);
+    Snapshot_Restore(&h->redo_stack[h->redo_top], canvas);
+    Snapshot_Clear(&h->redo_stack[h->redo_top]);
     return 1;
 }
 
@@ -169,8 +161,8 @@ void History_Clear(History* h) {
     int i;
     if (!h) return;
     for (i = 0; i < h->capacity; i++) {
-        FreeState(&h->undo_stack[i]);
-        FreeState(&h->redo_stack[i]);
+        Snapshot_Clear(&h->undo_stack[i]);
+        Snapshot_Clear(&h->redo_stack[i]);
     }
     h->undo_top = 0;
     h->undo_bottom = 0;
