@@ -4,13 +4,15 @@
 #include "types.h"
 #include <stddef.h>
 
+struct Canvas;
+
 typedef struct History History;
 
-History* History_New(size_t buffer_size, int capacity);
+History* History_New(int capacity);
 void History_Free(History* history);
-void History_Push(History* history, const byte* buffer);
-int History_Undo(History* history, byte* current_buffer);
-int History_Redo(History* history, byte* current_buffer);
+void History_Push(History* history, struct Canvas* canvas);
+int History_Undo(History* history, struct Canvas* canvas);
+int History_Redo(History* history, struct Canvas* canvas);
 void History_Clear(History* history);
 
 #endif

@@ -141,6 +141,7 @@ Canvas *Canvas_New(
 
 void Canvas_Free(Canvas *canvas) {
 	free(canvas->pixels);
+	free(canvas->delays);
 	free(canvas);
 }
 
