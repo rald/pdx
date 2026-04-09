@@ -466,3 +466,103 @@ Canvas *Canvas_SaveCVS(Canvas *canvas, char *filename) {
 
 	fclose(fp);
 }
+
+void Canvas_AddFrameBefore(Canvas *canvas) {
+	int frameSize = canvas->w * canvas->h;
+	int oldNframe = canvas->nframe;
+	int currentFrame = canvas->frame;
+	int i;
+	byte *newPixels;
+	int *newDelays;
+
+	newPixels = realloc(canvas->pixels, canvas->w * canvas->h * (oldNframe + 1));
+	if (!newPixels) return;
+	canvas->pixels = newPixels;
+
+	newDelays = realloc(canvas->delays, sizeof(int) * (oldNframe + 1));
+	if (!newDelays) return;
+	canvas->delays = newDelays;
+
+	canvas->nframe++;
+
+	/* Move frames from currentFrame onwards one step to the right */
+	memmove(canvas->pixels + (currentFrame + 1) * frameSize,
+			canvas->pixels + currentFrame * frameSize,
+			(oldNframe - currentFrame) * frameSize);
+
+	memmove(canvas->delays + currentFrame + 1,
+			canvas->delays + currentFrame,
+			sizeof(int) * (oldNframe - currentFrame));
+
+	/* Initialize new frame */
+	for (i = 0; i < frameSize; i++) {
+		canvas->pixels[currentFrame * frameSize + i] = canvas->transparent;
+	}
+	canvas->delays[currentFrame] = 10;
+}
+
+void Canvas_AddFrameAfter(Canvas *canvas) {
+	int frameSize = canvas->w * canvas->h;
+	int oldNframe = canvas->nframe;
+	int nextFrame = canvas->frame + 1;
+	int i;
+	byte *newPixels;
+	int *newDelays;
+
+	newPixels = realloc(canvas->pixels, canvas->w * canvas->h * (oldNframe + 1));
+	if (!newPixels) return;
+	canvas->pixels = newPixels;
+
+	newDelays = realloc(canvas->delays, sizeof(int) * (oldNframe + 1));
+	if (!newDelays) return;
+	canvas->delays = newDelays;
+
+	canvas->nframe++;
+
+	if (nextFrame < canvas->nframe - 1) {
+		memmove(canvas->pixels + (nextFrame + 1) * frameSize,
+				canvas->pixels + nextFrame * frameSize,
+				(oldNframe - nextFrame) * frameSize);
+
+		memmove(canvas->delays + nextFrame + 1,
+				canvas->delays + nextFrame,
+				sizeof(int) * (oldNframe - nextFrame));
+	}
+
+	/* Initialize new frame */
+	for (i = 0; i < frameSize; i++) {
+		canvas->pixels[nextFrame * frameSize + i] = canvas->transparent;
+	}
+	canvas->delays[nextFrame] = 10;
+	canvas->frame = nextFrame;
+}
+
+void Canvas_RemoveFrame(Canvas *canvas) {
+	int frameSize = canvas->w * canvas->h;
+	int currentFrame = canvas->frame;
+	byte *newPixels;
+	int *newDelays;
+
+	if (canvas->nframe <= 1) return;
+
+	if (currentFrame < canvas->nframe - 1) {
+		memmove(canvas->pixels + currentFrame * frameSize,
+				canvas->pixels + (currentFrame + 1) * frameSize,
+				(canvas->nframe - currentFrame - 1) * frameSize);
+
+		memmove(canvas->delays + currentFrame,
+				canvas->delays + currentFrame + 1,
+				sizeof(int) * (canvas->nframe - currentFrame - 1));
+	}
+
+	canvas->nframe--;
+	newPixels = realloc(canvas->pixels, canvas->w * canvas->h * canvas->nframe);
+	if (newPixels) canvas->pixels = newPixels;
+
+	newDelays = realloc(canvas->delays, sizeof(int) * canvas->nframe);
+	if (newDelays) canvas->delays = newDelays;
+
+	if (canvas->frame >= canvas->nframe) {
+		canvas->frame = canvas->nframe - 1;
+	}
+}

@@ -58,6 +58,10 @@ void Canvas_FillRect(Canvas *canvas,int x0,int y0,int x1,int y1,int c);
 void Canvas_DrawOval(Canvas *canvas,int x1, int y1, int x2, int y2,int c);
 void Canvas_FillOval(Canvas *canvas,int x0,int y0,int x1,int y1,int c);
 
+void Canvas_AddFrameBefore(Canvas *canvas);
+void Canvas_AddFrameAfter(Canvas *canvas);
+void Canvas_RemoveFrame(Canvas *canvas);
+
 #endif
 
 
