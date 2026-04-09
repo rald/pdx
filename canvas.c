@@ -115,6 +115,12 @@ Canvas *Canvas_New(
     canvas->h = h;
     canvas->nframe = nframe;
     canvas->transparent = transparent;
+
+   	canvas->delays=malloc(sizeof(*canvas->delays)*canvas->nframe);
+	for(i = 0; i < canvas->nframe; i++) {
+		canvas->delays[i]=10;
+	}
+
     canvas->pixels = calloc(w * h * nframe, sizeof(*canvas->pixels));
     if(!canvas->pixels) {
         free(canvas);
@@ -137,51 +143,6 @@ void Canvas_Free(Canvas *canvas) {
 	free(canvas->pixels);
 	free(canvas);
 }
-
-/*
-void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport) {
-
-	int i,j;
-
-    int px = canvas->pixelSize;
-    int step = canvas->gridShow ? px + 1 : px;
-    if(step <= 0) return;
-
-    int base = canvas->frame * canvas->w * canvas->h;
-    int x0 = (-canvas->x) / step;
-    int y0 = (-canvas->y) / step;
-    int x1 = (-canvas->x + viewport.w) / step + 1;
-    int y1 = (-canvas->y + viewport.h) / step + 1;
-
-    if(x0 < 0) x0 = 0;
-    if(y0 < 0) y0 = 0;
-    if(x1 > canvas->w) x1 = canvas->w;
-    if(y1 > canvas->h) y1 = canvas->h;
-
-    SDL_RenderSetClipRect(renderer, &viewport);
-
-    SDL_Rect rect;
-    for(j = y0; j < y1; j++) {
-        int row = base + j * canvas->w;
-        rect.y = canvas->y + j * step + (canvas->gridShow ? 1 : 0);
-        rect.h = px;
-
-        for(i = x0; i < x1; i++) {
-            byte l = canvas->pixels[row + i];
-            if(l == canvas->transparent) continue;
-
-            rect.x = canvas->x + i * step + (canvas->gridShow ? 1 : 0);
-            rect.w = px;
-
-            SDL_Color c = canvas->palette->colors[l];
-            SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, 255);
-            SDL_RenderFillRect(renderer, &rect);
-        }
-    }
-
-    SDL_RenderSetClipRect(renderer, NULL);
-}
-*/
 
 void Canvas_Draw(Canvas *canvas, SDL_Renderer *renderer, SDL_Rect viewport) {
     int i, j;
@@ -443,6 +404,12 @@ Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 
 		fscanf(fp,"%d,%d,%d,%d",&canvas->w,&canvas->h,&canvas->nframe,&canvas->transparent);
 
+       	canvas->delays=malloc(sizeof(*canvas->delays)*canvas->nframe);
+	    for(i = 0; i < canvas->nframe; i++) {
+		    if(i!=0) fscanf(fp,",");
+		    fscanf(fp,"%d",&canvas->delays[i]);
+	    }
+
 		canvas->pixels = malloc((canvas->w * canvas->h * canvas->nframe) * sizeof(*canvas->pixels));
 		for(i = 0; i < canvas->w * canvas->h * canvas->nframe; i++) canvas->pixels[i]=12;
 
@@ -471,11 +438,20 @@ Canvas *Canvas_LoadCVS(char *filename, Palette *palette) {
 }
 
 Canvas *Canvas_SaveCVS(Canvas *canvas, char *filename) {
-	int i,j,k;
+	int f,i,j,k;
 	int c;
 	char *hex="0123456789ABCDEF";
+
 	FILE *fp=fopen(filename,"wb");
-	fprintf(fp,"%d,%d,%d,%d\n\n",canvas->w,canvas->h,canvas->nframe,canvas->transparent);
+
+	fprintf(fp,"%d,%d,%d,%d\n",canvas->w,canvas->h,canvas->nframe,canvas->transparent);
+
+	for(f = 0; f < canvas->nframe; f++) {
+		if(f!=0) fprintf(fp,",");
+		fprintf(fp,"%d",canvas->delays[f]);
+	}
+	fprintf(fp,"\n\n");
+
 	for(j=0;j<canvas->h;j++) {
 		for(i=0;i<canvas->w;i++) {
 			k=hex[canvas->pixels[j*canvas->w+i]];

@@ -42,15 +42,16 @@ int main(int argc,char *argv[]) {
 	SDL_LockSurface(surface);
 
 	FILE *fp=fopen(argv[2],"w");
-	
-	fprintf(fp,"%d,%d,1,-1\n\n",surface->w,surface->h);
+
+	fprintf(fp,"%d,%d,1,-1\n",surface->w,surface->h);
+	fprintf(fp,"100\n\n");
 	for(j=0;j<surface->h;j++) {
 		for(i=0;i<surface->w;i++) {
 			Uint32 pixel=getpixel(surface,i,j);
 			if(pixel>=0 && pixel<16) {
 				fprintf(fp,"%X",pixel);
 			} else {
-				printf("%d: %d Error: invalid pixel color\n",i,j);
+				printf("File %s: %d: %d Error: invalid pixel color\n",argv[2],i,j);
 				return EXIT_FAILURE;
 			}
 		}

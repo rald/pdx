@@ -24,6 +24,7 @@ typedef struct {
 	bool gridShow;
 	int pixelSize;
 	int frame;
+	int *delays;
 } Canvas;
 
 Canvas *Canvas_New(

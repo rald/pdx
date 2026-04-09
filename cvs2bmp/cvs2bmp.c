@@ -36,6 +36,7 @@ typedef unsigned char byte;
 typedef struct {
 	int w,h,nframe,transparent;
 	byte *pixels;
+	int *delays;
 } Canvas;
 
 void putpixel(SDL_Surface *surface, int x, int y, Uint32 pixel) {
@@ -73,6 +74,7 @@ Uint32 getpixel(SDL_Surface *surface, int x, int y) {
     }
 }
 
+
 Canvas *Canvas_LoadCVS(char *filename) {
 	int i,j,k,l;
 	int c;
@@ -87,13 +89,20 @@ Canvas *Canvas_LoadCVS(char *filename) {
 		fprintf(stderr,"Error opening file %s: %s\n",filename,strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	
+
 	fscanf(fp,"%d,%d,%d,%d",&canvas->w,&canvas->h,&canvas->nframe,&canvas->transparent);
+
+	canvas->delays=malloc(sizeof(*canvas->delays)*canvas->nframe);
+
+	for(i = 0; i < canvas->nframe; i++) {
+		if(i!=0) fscanf(fp,",");
+		fscanf(fp,"%d",&canvas->delays[i]);
+	}
 
 	canvas->pixels = malloc((canvas->w * canvas->h * canvas->nframe) * sizeof(*canvas->pixels));
 	for(i = 0; i < canvas->w * canvas->h * canvas->nframe; i++) canvas->pixels[i]=12;
-	
-	i=0; l=1;	
+
+	i=0; l=1;
 	while((c=fgetc(fp))!=EOF) {
 		if(c==' ' || c=='\t') continue;
 		if(c=='\n') { l++; continue; }
@@ -105,7 +114,7 @@ Canvas *Canvas_LoadCVS(char *filename) {
 			}
 		}
 		if(j==-1) {
-			fprintf(stderr,"Line %d: invalid character.\n",l);
+			fprintf(stderr,"File %s: Line %d: invalid character.\n",filename,l);
 			exit(-1);
 		}
 		canvas->pixels[i++]=j;
@@ -129,13 +138,13 @@ int main(int argc,char *argv[]) {
 	Canvas *canvas=Canvas_LoadCVS(argv[1]);
 
 
-	for(f=0;f<canvas->nframe;f++) {	
+	for(f=0;f<canvas->nframe;f++) {
 
 		SDL_Surface* surface = SDL_CreateRGBSurface(0, canvas->w, canvas->h, 32, 0, 0, 0, 0);
 
 		if (surface == NULL) {
 			fprintf(stderr,"Error: Unable to create surface: %s\n", SDL_GetError());
-			return EXIT_FAILURE;		
+			return EXIT_FAILURE;
 		}
 
 		for(j=0;j<canvas->h;j++) {
