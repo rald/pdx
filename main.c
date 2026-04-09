@@ -10,6 +10,7 @@
 #include "button.h"
 #include "scrollbar.h"
 #include "MyWindow.h"
+#include "history.h"
 
 
 #include "gifenc.h"
@@ -50,6 +51,7 @@ SDL_Renderer *renderer = NULL;
 SDL_Event event;
 
 Canvas *canvas = NULL;
+History *history = NULL;
 Mouse *mouse = NULL;
 Palette *palette = NULL;
 Target *target = NULL;
@@ -132,6 +134,7 @@ int main(int argc,char *argv[]) {
 	SDL_WarpMouseInWindow(window, mouse->x, mouse->y);
 
 	canvas=Canvas_LoadCVS(argv[1], palette);
+	history = History_New(canvas->w * canvas->h * canvas->nframe, 100);
 
 	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
 
@@ -165,6 +168,20 @@ int main(int argc,char *argv[]) {
 				case SDLK_g:
 					canvas->gridShow = !canvas->gridShow;
 					break;
+				case SDLK_z:
+					if(event.key.keysym.mod & KMOD_CTRL) {
+						if(event.key.keysym.mod & KMOD_SHIFT) {
+							History_Redo(history, canvas->pixels);
+						} else {
+							History_Undo(history, canvas->pixels);
+						}
+					}
+					break;
+				case SDLK_y:
+					if(event.key.keysym.mod & KMOD_CTRL) {
+						History_Redo(history, canvas->pixels);
+					}
+					break;
                 case SDLK_c: {
                     int step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;                    
                     int targetWorldX = target->cellX * step + (canvas->pixelSize / 2);
@@ -174,6 +191,7 @@ int main(int argc,char *argv[]) {
                     break;
                 }
 				case SDLK_l:
+					History_Push(history, canvas->pixels);
 					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
 					Canvas_DrawLine(canvas, tx, ty, cx, cy, palette->currentColor);
@@ -183,6 +201,7 @@ int main(int argc,char *argv[]) {
 					}
 					break;
 				case SDLK_r:
+					History_Push(history, canvas->pixels);
 					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
 					if(event.key.keysym.mod & KMOD_SHIFT) {
@@ -192,6 +211,7 @@ int main(int argc,char *argv[]) {
 					}				
 					break;
 				case SDLK_o:
+					History_Push(history, canvas->pixels);
 					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
 					if(event.key.keysym.mod & KMOD_SHIFT) {
@@ -201,6 +221,7 @@ int main(int argc,char *argv[]) {
 					}
 					break;
 				case SDLK_f:
+					History_Push(history, canvas->pixels);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
 					oldColor = canvas->pixels[cy * canvas->w + cx];
 					newColor = palette->currentColor;
@@ -211,8 +232,10 @@ int main(int argc,char *argv[]) {
 					    MyWindow_Free(myWindow);
 					    Target_Free(target);
 					    Canvas_Free(canvas);
+					    History_Free(history);
 					    					    
                         canvas = Canvas_LoadCVS(argv[1], palette);
+                        history = History_New(canvas->w * canvas->h * canvas->nframe, 100);
                     	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
                     	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32, 16);
     				} else {
@@ -237,6 +260,7 @@ int main(int argc,char *argv[]) {
 				if(!isDrawing && event.button.button == SDL_BUTTON_LEFT) {
 					Canvas_MouseToCell(canvas, event.button.x, event.button.y, &cx, &cy);
 					if(cx >= 0 && cx < canvas->w && cy >= 0 && cy < canvas->h) {
+						History_Push(history, canvas->pixels);
 						isDrawing = true;
 						dx = cx;
 						dy = cy;
@@ -335,6 +359,7 @@ int main(int argc,char *argv[]) {
 	MyWindow_Free(myWindow);
 	Palette_Free(palette);
 	Canvas_Free(canvas);
+	History_Free(history);
 	Target_Free(target);
 	Mouse_Free(mouse);
 
