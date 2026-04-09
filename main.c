@@ -220,7 +220,21 @@ int main(int argc,char *argv[]) {
 						target->cellY=cy;
 					}
 					break;
+				case SDLK_a:
+					if(event.key.keysym.mod & KMOD_SHIFT) {
+						Canvas_AddFrameAfter(canvas);
+					} else {
+						Canvas_AddFrameBefore(canvas);
+					}
+					History_Free(history);
+					history = History_New(canvas->w * canvas->h * canvas->nframe, 100);
+					break;
 				case SDLK_r:
+					Canvas_RemoveFrame(canvas);
+					History_Free(history);
+					history = History_New(canvas->w * canvas->h * canvas->nframe, 100);
+					break;
+				case SDLK_t:
 					History_Push(history, canvas->pixels);
 					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
