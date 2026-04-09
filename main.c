@@ -168,22 +168,42 @@ int main(int argc,char *argv[]) {
 				case SDLK_g:
 					canvas->gridShow = !canvas->gridShow;
 					break;
-				case SDLK_z:
-					if(event.key.keysym.mod & KMOD_CTRL) {
-						if(event.key.keysym.mod & KMOD_SHIFT) {
-							History_Redo(history, canvas->pixels);
-						} else {
-							History_Undo(history, canvas->pixels);
-						}
-					}
-					break;
+                case SDLK_z: {
+                    int oldPixelSize = canvas->pixelSize;
+                    int targetCellX = target->cellX;
+                    int targetCellY = target->cellY;
+                    int step, targetWorldX, targetWorldY;
+
+                    if(event.key.keysym.mod & KMOD_SHIFT) {
+                        if(canvas->pixelSize > 1) canvas->pixelSize--;
+                    } else {
+                        if(canvas->pixelSize < 32) canvas->pixelSize++;
+                    }
+
+                    if(oldPixelSize != canvas->pixelSize) {
+                        step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
+                        targetWorldX = targetCellX * step + (canvas->pixelSize / 2);
+                        targetWorldY = targetCellY * step + (canvas->pixelSize / 2);
+
+                        myWindow->hscroll->scrollPosition = targetWorldX - (myWindow->viewPortW / 2);
+                        myWindow->vscroll->scrollPosition = targetWorldY - (myWindow->viewPortH / 2);
+                    }
+                    break;
+                }
+                case SDLK_u:
+                    if(event.key.keysym.mod & KMOD_SHIFT) {
+                        History_Redo(history, canvas->pixels);
+                    } else {
+                        History_Undo(history, canvas->pixels);
+                    }
+                    break;
 				case SDLK_y:
 					if(event.key.keysym.mod & KMOD_CTRL) {
 						History_Redo(history, canvas->pixels);
 					}
 					break;
                 case SDLK_c: {
-                    int step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;                    
+                    int step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
                     int targetWorldX = target->cellX * step + (canvas->pixelSize / 2);
                     int targetWorldY = target->cellY * step + (canvas->pixelSize / 2);
                     myWindow->hscroll->scrollPosition = targetWorldX - (myWindow->viewPortW / 2);
@@ -197,7 +217,7 @@ int main(int argc,char *argv[]) {
 					Canvas_DrawLine(canvas, tx, ty, cx, cy, palette->currentColor);
 					if(!(event.key.keysym.mod & KMOD_SHIFT)) {
 						target->cellX=cx;
-						target->cellY=cy;					
+						target->cellY=cy;
 					}
 					break;
 				case SDLK_r:
@@ -205,10 +225,10 @@ int main(int argc,char *argv[]) {
 					Canvas_MouseToCell(canvas,target->x,target->y,&tx,&ty);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
 					if(event.key.keysym.mod & KMOD_SHIFT) {
-						Canvas_FillRect(canvas, tx, ty, cx, cy, palette->currentColor);					
+						Canvas_FillRect(canvas, tx, ty, cx, cy, palette->currentColor);
 					} else {
 						Canvas_DrawRect(canvas, tx, ty, cx, cy, palette->currentColor);
-					}				
+					}
 					break;
 				case SDLK_o:
 					History_Push(history, canvas->pixels);
@@ -242,16 +262,18 @@ int main(int argc,char *argv[]) {
     					Canvas_SaveCVS(canvas,argv[1]);
     				}
 					break;
-				case SDLK_p:
-					canvas->frame--;
-					if(canvas->frame<0) canvas->frame=0;
-					break;
 				case SDLK_n:
-					canvas->frame++;
-					if(canvas->frame>=canvas->nframe) canvas->frame=canvas->nframe-1;
+					if(event.key.keysym.mod & KMOD_SHIFT) {
+						canvas->frame--;
+						if(canvas->frame<0) canvas->frame=canvas->nframe-1;
+						break;
+					} else {
+						canvas->frame++;
+						if(canvas->frame>=canvas->nframe) canvas->frame=0;
+					}
 					break;
-				default: 
-					break;			
+				default:
+					break;
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
@@ -281,7 +303,7 @@ int main(int argc,char *argv[]) {
 						dy = cy;
 					}
 				}
-				break;				
+				break;
             case SDL_MOUSEWHEEL:
                 if(overPalette || palette->scrubbing || overScrollBar || draggingScrollBar) continue;
                 {
@@ -295,17 +317,17 @@ int main(int argc,char *argv[]) {
                         if(event.wheel.y > 0) event.wheel.y *= -1;
                     }
 
-                    if(canvas->pixelSize > 1 && event.wheel.y < 0) { 
-                        canvas->pixelSize--; 
-                    } 
-                    else if(canvas->pixelSize < 32 && event.wheel.y > 0) { 
+                    if(canvas->pixelSize > 1 && event.wheel.y < 0) {
+                        canvas->pixelSize--;
+                    }
+                    else if(canvas->pixelSize < 32 && event.wheel.y > 0) {
                         canvas->pixelSize++;
                     }
 
                     /* If the zoom level changed, recalculate scroll positions to center the target */
                     if (oldPixelSize != canvas->pixelSize) {
                         step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
-                        
+
                         /* Calculate the target's center in world pixels at the new scale */
                         targetWorldX = targetCellX * step + (canvas->pixelSize / 2);
                         targetWorldY = targetCellY * step + (canvas->pixelSize / 2);
@@ -313,12 +335,12 @@ int main(int argc,char *argv[]) {
                         /* Adjust scrollbars so the target world position is at the viewport center */
                         myWindow->hscroll->scrollPosition = targetWorldX - (myWindow->viewPortW / 2);
                         myWindow->vscroll->scrollPosition = targetWorldY - (myWindow->viewPortH / 2);
-                        
+
                         /* ScrollBar_Update (via MyWindow_Update) will clamp these values in the next frame */
                     }
                 }
                 break;
-	        default: 
+	        default:
 	        	break;
             }
             
