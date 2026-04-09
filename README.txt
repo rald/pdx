@@ -1,4 +1,4 @@
-# Pixel Dancer
+Pixel Dancer
 
 undo/redo			u/shift-u
 zoom in/out			z/shift-z, mouse scroll down/mouse scroll up
