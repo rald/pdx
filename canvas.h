@@ -14,7 +14,7 @@
 #include "types.h"
 #include "palette.h"
 
-typedef struct {
+typedef struct Canvas {
 	Palette *palette;
 	int x,y,w,h;
 	int nframe;
