@@ -452,13 +452,17 @@ Canvas *Canvas_SaveCVS(Canvas *canvas, char *filename) {
 	}
 	fprintf(fp,"\n\n");
 
-	for(j=0;j<canvas->h;j++) {
-		for(i=0;i<canvas->w;i++) {
-			k=hex[canvas->pixels[j*canvas->w+i]];
-			fputc(k,fp);
+	for(f=0;f<canvas->nframe;f++) {
+		for(j=0;j<canvas->h;j++) {
+			for(i=0;i<canvas->w;i++) {
+				k=hex[canvas->pixels[f*canvas->w*canvas->h+j*canvas->w+i]];
+				fputc(k,fp);
+			}
+			fputc('\n',fp);
 		}
 		fputc('\n',fp);
 	}
 	fputc('\n',fp);
+
 	fclose(fp);
 }

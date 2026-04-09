@@ -223,7 +223,7 @@ int main(int argc,char *argv[]) {
 				case SDLK_f:
 					History_Push(history, canvas->pixels);
 					Canvas_MouseToCell(canvas,mouse->x,mouse->y,&cx,&cy);
-					oldColor = canvas->pixels[cy * canvas->w + cx];
+					oldColor = Canvas_ReadPoint(canvas,cx,cy);
 					newColor = palette->currentColor;
 					Canvas_FloodFill(canvas, cx, cy, newColor, oldColor);
 					break;
@@ -233,7 +233,7 @@ int main(int argc,char *argv[]) {
 					    Target_Free(target);
 					    Canvas_Free(canvas);
 					    History_Free(history);
-					    					    
+
                         canvas = Canvas_LoadCVS(argv[1], palette);
                         history = History_New(canvas->w * canvas->h * canvas->nframe, 100);
                     	target=Target_New(palette, canvas, canvas->w / 2, canvas->h / 2);
@@ -347,7 +347,7 @@ int main(int argc,char *argv[]) {
 
 		{
 			char msg[256];
-			sprintf(msg,"%03d",canvas->frame);
+			sprintf(msg,"%3d",canvas->frame);
 			DrawText(renderer,font,palette,SCREEN_WIDTH-3*font->w*2,SCREEN_HEIGHT-font->h*2,2,msg);
 		}
 
