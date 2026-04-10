@@ -11,6 +11,8 @@
 #include "scrollbar.h"
 #include "MyWindow.h"
 #include "history.h"
+#include "clipboard.h"
+
 
 
 #include "gifenc.h"
@@ -55,10 +57,11 @@ History *history = NULL;
 Mouse *mouse = NULL;
 Palette *palette = NULL;
 Target *target = NULL;
+Canvas *font = NULL;
+Clipboard *clipboard = NULL;
 
 MyWindow *myWindow = NULL;
 
-Canvas *font = NULL;
 
 bool isDrawing = false;
 int dx = 0, dy = 0;
@@ -140,8 +143,9 @@ int main(int argc,char *argv[]) {
 
 	myWindow = MyWindow_New(palette, canvas, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 32, 16);
 
-
 	font=Canvas_LoadCVS("cvs/font-00.cvs", palette);
+
+    clipboard = Clipboard_New();
 
     while(!quit) {
 
@@ -202,7 +206,7 @@ int main(int argc,char *argv[]) {
 						History_Redo(history, canvas);
 					}
 					break;
-                case SDLK_c: {
+                case SDLK_x: {
                     int step = canvas->gridShow ? canvas->pixelSize + 1 : canvas->pixelSize;
                     int targetWorldX = target->cellX * step + (canvas->pixelSize / 2);
                     int targetWorldY = target->cellY * step + (canvas->pixelSize / 2);
@@ -284,6 +288,40 @@ int main(int argc,char *argv[]) {
 						if(canvas->frame>=canvas->nframe) canvas->frame=0;
 					}
 					break;
+                case SDLK_c: {
+                    int sx, sy, ex, ey;
+                    int x0, y0, w, h;
+
+                    Canvas_MouseToCell(canvas, target->x, target->y, &sx, &sy);
+                    Canvas_MouseToCell(canvas, mouse->x, mouse->y, &ex, &ey);
+
+                    x0 = (sx < ex) ? sx : ex;
+                    y0 = (sy < ey) ? sy : ey;
+                    w = abs(ex - sx) + 1;
+                    h = abs(ey - sy) + 1;
+
+                    History_Push(history, canvas);
+                    Clipboard_CopyRect(clipboard, canvas, x0, y0, w, h);
+
+                    if(event.key.keysym.mod & KMOD_SHIFT) {
+                        int x, y;
+                        for(y = 0; y < h; y++) {
+                            for(x = 0; x < w; x++) {
+                                Canvas_DrawPoint(canvas, x0 + x, y0 + y, palette->currentColor);
+                            }
+                        }
+                    }
+                    break;
+                }
+                case SDLK_p: {
+                    int px, py;
+                    if(clipboard && clipboard->valid) {
+                        History_Push(history, canvas);
+                        Canvas_MouseToCell(canvas, target->x, target->y, &px, &py);
+                        Clipboard_PasteRect(clipboard, canvas, px, py);
+                    }
+                    break;
+                }
 				default:
 					break;
 				}

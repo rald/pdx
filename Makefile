@@ -7,7 +7,7 @@ CFLAGS = -lSDL2 -lgifenc -lgifdec -g -I. -I lecram/gifenc -I lecram/gifdec
 LDFLAGS = -L. -L lecram/gifenc -L lecram/gifdec
 LDLIBS = -std=c89 -lm
 
-OBJS = main.o utils.o canvas.o mouse.o target.o palette.o button.o scrollbar.o MyWindow.o history.o
+OBJS = main.o utils.o canvas.o mouse.o target.o palette.o button.o scrollbar.o MyWindow.o history.o clipboard.o
 
 all: libgifenc.a libgifdec.a game
 
