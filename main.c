@@ -322,6 +322,20 @@ int main(int argc,char *argv[]) {
                     }
                     break;
                 }
+                case SDLK_e: {
+                    int mx = mouse->x;
+                    int my = mouse->y;
+                    int cx, cy;
+                    byte picked;
+
+                    Canvas_MouseToCell(canvas, mx, my, &cx, &cy);
+                    picked = Canvas_ReadPoint(canvas, cx, cy);
+
+                    if (picked >= 0 && picked < palette->ncolors) {
+                        palette->currentColor = picked;
+                    }
+                    break;
+                }
 				default:
 					break;
 				}
