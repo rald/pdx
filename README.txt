@@ -18,4 +18,6 @@ add frame before/after      a/shift-a
 delete frame                d
 next/prev frame             n/shift-n
 
+rotate 90/-90 degrees       i/shift-i
+
 move target			        right mouse click
