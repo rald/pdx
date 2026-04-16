@@ -336,6 +336,56 @@ int main(int argc,char *argv[]) {
                     }
                     break;
                 }
+                case SDLK_i: {
+                    int sx, sy, ex, ey;
+                    int x0, y0, w, h;
+                    int x, y;
+                    byte *tmp;
+
+                    Canvas_MouseToCell(canvas, target->x, target->y, &sx, &sy);
+                    Canvas_MouseToCell(canvas, mouse->x, mouse->y, &ex, &ey);
+
+                    x0 = (sx < ex) ? sx : ex;
+                    y0 = (sy < ey) ? sy : ey;
+                    w = abs(ex - sx) + 1;
+                    h = abs(ey - sy) + 1;
+
+                    if (w <= 0 || h <= 0) break;
+
+                    History_Push(history, canvas);
+
+                    tmp = malloc(w * h);
+                    if (!tmp) break;
+
+                    for (y = 0; y < h; y++) {
+                        for (x = 0; x < w; x++) {
+                            tmp[y * w + x] = Canvas_ReadPoint(canvas, x0 + x, y0 + y);
+                        }
+                    }
+
+                    if (event.key.keysym.mod & KMOD_SHIFT) {
+                        for (y = 0; y < h; y++) {
+                            for (x = 0; x < w; x++) {
+                                Canvas_DrawPoint(canvas,
+                                    x0 + x,
+                                    y0 + y,
+                                    tmp[x * w + (w - 1 - y)]);
+                            }
+                        }
+                    } else {
+                        for (y = 0; y < h; y++) {
+                            for (x = 0; x < w; x++) {
+                                Canvas_DrawPoint(canvas,
+                                    x0 + x,
+                                    y0 + y,
+                                    tmp[(h - 1 - x) * w + y]);
+                            }
+                        }
+                    }
+
+                    free(tmp);
+                    break;
+                }
 				default:
 					break;
 				}
