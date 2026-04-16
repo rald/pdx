@@ -1,4 +1,4 @@
 #!/bin/sh
-reset && make && ./game cvs/ani.cvs
+reset && make && ./game cvs/abe.cvs
 
 
